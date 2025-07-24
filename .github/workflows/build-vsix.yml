@@ -1,0 +1,74 @@
+name: Build VS Code Extension
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'tsconfig.json'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'tsconfig.json'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Compile TypeScript
+      run: npm run compile
+      
+    - name: Generate build version
+      id: version
+      run: |
+        # Get current version from package.json (e.g., "1.0.0")
+        CURRENT_VERSION=$(node -p "require('./package.json').version")
+        # Generate build version with date-based build number
+        # Format: YMMDDHHMM (e.g., 507182220) - fits in 32-bit int limit
+        BUILD_NUMBER=$(date +%y%m%d%H%M | sed 's/^2//')
+        # Extract major.minor from current version and append build number
+        MAJOR_MINOR=$(echo $CURRENT_VERSION | cut -d. -f1,2)
+        BUILD_VERSION="${MAJOR_MINOR}.${BUILD_NUMBER}"
+        echo "version=$BUILD_VERSION" >> $GITHUB_OUTPUT
+        echo "original_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+        echo "Build version: $BUILD_VERSION"
+        
+    - name: Update package.json with build version
+      run: |
+        npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+        
+    - name: Package extension
+      run: npm run package
+        
+    - name: Upload VSIX artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: joshbot-vsix-${{ steps.version.outputs.version }}
+        path: "*.vsix"
+        retention-days: 30
+        
+    - name: Upload build info
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-info
+        path: |
+          package.json
+          out/**
+        retention-days: 7

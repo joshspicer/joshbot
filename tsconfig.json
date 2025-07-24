@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"jsx": "react",
+		"jsxFactory": "vscpp",
+		"jsxFragmentFactory": "vscppf",
+		"target": "es2020",
+		"module": "commonjs",
+		"strict": true,
+		"sourceMap": true,
+		"alwaysStrict": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"experimentalDecorators": true
+	},
+	"include": ["src/**/*", "vscode.d.ts", "vscode.proposed.*"]
+}

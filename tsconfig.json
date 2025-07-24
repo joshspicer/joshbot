@@ -7,6 +7,7 @@
 		"module": "commonjs",
 		"strict": true,
 		"sourceMap": true,
+		"outDir": "out",
 		"alwaysStrict": true,
 		"noImplicitAny": true,
 		"noImplicitReturns": true,

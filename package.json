@@ -1,6 +1,6 @@
 {
-  "name": "joshbot",
-  "displayName": "Josh Bot",
+  "name": "bingbot",
+  "displayName": "Bing Bot",
   "description": "A dedicated coding assistant great at complex tasks",
   "version": "1.0.0",
   "publisher": "spcr-test",
@@ -22,7 +22,8 @@
     "workspace"
   ],
   "activationEvents": [
-    "onChatSession:josh-bot"
+    "onChatSession:bing",
+    "*"
   ],
   "capabilities": {
     "virtualWorkspaces": true,
@@ -33,16 +34,16 @@
   "contributes": {
     "chatSessions": [
       {
-        "id": "josh-bot",
-        "name": "joshbot",
-        "displayName": "Josh Bot",
-        "description": "A dedicated coding assistant great at complex tasks",
+        "id": "bing",
+        "name": "bing",
+        "displayName": "Bing",
+        "description": "BingBot!!!!",
         "when": "true"
       }
     ],
     "commands": [
       {
-        "command": "joshbot.hello",
+        "command": "bing.hello",
         "title": "Hello",
         "category": "JoshBot"
       }

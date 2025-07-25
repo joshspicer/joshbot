@@ -11,20 +11,20 @@ async function getSessionContent(id: string, _token: vscode.CancellationToken): 
 }
 
 // Must match package.json's "contributes.chatSessions.[0].id"
-const CHAT_SESSION_TYPE = 'josh-bot';
+const CHAT_SESSION_TYPE = 'bing';
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('JoshBot extension is now active!');
+	console.log('Bing extension is now active!');
 
-	const disposable = vscode.commands.registerCommand('joshbot.hello', () => {
-		vscode.window.showInformationMessage('Hello from JoshBot!');
+	const disposable = vscode.commands.registerCommand('bing.hello', () => {
+		vscode.window.showInformationMessage('Hello from Bing!');
 	});
 
 	const sessionManager = JoshBotSessionManager.getInstance();
 	sessionManager.initialize(context);
 
-	const provider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
-		label = vscode.l10n.t('JoshBot');
+		const provider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
+		label = vscode.l10n.t('Bing');
 		provideChatSessionItems = async (_token: vscode.CancellationToken) => {
 			return await sessionManager.getSessionItems(_token);
 		};
@@ -80,12 +80,12 @@ class JoshBotSessionManager {
 	private createDemoSession(): void {
 		const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
 		currentResponseParts.push(new vscode.ChatResponseMarkdownPart('hey'));
-		const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
+		const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'bing');
 		const defaultSession: JoshBotSession = {
 			id: 'default-session',
-			name: 'JoshBot Chat',
+			name: 'Bing Chat',
 			history: [
-				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
+				new vscode.ChatRequestTurn2('hello', undefined, [], 'bing', [], []),
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
@@ -99,9 +99,9 @@ class JoshBotSessionManager {
 
 		const ongoingSession: JoshBotSession = {
 			id: 'ongoing-session',
-			name: 'JoshBot Chat ongoing',
+			name: 'Bing Chat ongoing',
 			history: [
-				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
+				new vscode.ChatRequestTurn2('hello', undefined, [], 'bing', [], []),
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {

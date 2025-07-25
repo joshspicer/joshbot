@@ -23,7 +23,7 @@
   ],
   "activationEvents": [
     "onChatSession:josh-bot",
-    "*",
+    "*"
   ],
   "capabilities": {
     "virtualWorkspaces": true,
@@ -38,7 +38,7 @@
         "name": "joshbot",
         "displayName": "Josh Bot",
         "description": "A dedicated coding assistant great at complex tasks",
-        "when": "config.joshbot.dynamicChatParticipant"
+        "when": "config.joshbot.contributeChatSessions"
       }
     ],
     "commands": [
@@ -51,10 +51,10 @@
     "configuration": {
       "title": "JoshBot",
       "properties": {
-        "joshbot.dynamicChatParticipant": {
+        "joshbot.contributeChatSessions": {
           "type": "boolean",
           "default": true,
-          "description": "Enable dynamic chat participant contribution from JoshBot. This should always be true"
+          "description": "Enable to contribute chat sessions and a dynamic chat participant."
         }
       }
     }

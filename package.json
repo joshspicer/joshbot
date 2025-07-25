@@ -22,7 +22,8 @@
     "workspace"
   ],
   "activationEvents": [
-    "onChatSession:josh-bot"
+    "onChatSession:josh-bot",
+    "*",
   ],
   "capabilities": {
     "virtualWorkspaces": true,
@@ -37,7 +38,7 @@
         "name": "joshbot",
         "displayName": "Josh Bot",
         "description": "A dedicated coding assistant great at complex tasks",
-        "when": "true"
+        "when": "config.joshbot.dynamicChatParticipant"
       }
     ],
     "commands": [
@@ -46,7 +47,17 @@
         "title": "Hello",
         "category": "JoshBot"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "JoshBot",
+      "properties": {
+        "joshbot.dynamicChatParticipant": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable dynamic chat participant contribution from JoshBot. This should always be true"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

@@ -22,7 +22,8 @@
     "workspace"
   ],
   "activationEvents": [
-    "onChatSession:josh-bot"
+    "onChatSession:josh-bot",
+    "*"
   ],
   "capabilities": {
     "virtualWorkspaces": true,

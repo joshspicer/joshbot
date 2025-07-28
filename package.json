@@ -44,7 +44,7 @@
     ],
     "chatSessions": [
       {
-        "id": "josh-bot",
+        "type": "josh-bot",
         "name": "joshbot",
         "displayName": "Josh Bot",
         "description": "A dedicated coding assistant great at complex tasks",

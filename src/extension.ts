@@ -13,12 +13,30 @@ async function getSessionContent(id: string, _token: vscode.CancellationToken): 
 // Must match package.json's "contributes.chatSessions.[0].id"
 const CHAT_SESSION_TYPE = 'josh-bot';
 
+export interface IChatPullRequestContent {
+	uri: vscode.Uri;
+	title: string;
+	description: string;
+	author: string;
+	linkTag: string;
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 
-	const disposable = vscode.commands.registerCommand('joshbot.hello', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.hello', () => {
 		vscode.window.showInformationMessage('Hello from JoshBot!');
-	});
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.cloudButton', async (): Promise<IChatPullRequestContent> => {
+		return {
+			uri: vscode.Uri.parse('https://github.com/microsoft/vscode'),
+			title: 'Pull request by JoshBot',
+			description: 'This is the description of the pull request created by JoshBot.',
+			author: 'Author Name',
+			linkTag: 'PR-123'
+		}
+	}));
 
 	const sessionManager = JoshBotSessionManager.getInstance();
 	sessionManager.initialize(context);
@@ -44,8 +62,6 @@ export function activate(context: vscode.ExtensionContext) {
 		CHAT_SESSION_TYPE,
 		provider
 	));
-
-	context.subscriptions.push(disposable);
 }
 
 interface JoshBotSession extends vscode.ChatSession {

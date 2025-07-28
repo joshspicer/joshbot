@@ -1,1 +1,0 @@
-synced with https://github.com/microsoft/vscode/pull/256541/files#diff-cd1765d033b832b76f08b57e76ff338a36a7cd8a0de9d79af1d645fdce59d2cd

@@ -89,7 +89,7 @@
     "package": "vsce package",
     "deploy": "vsce publish",
     "postinstall": "npm run downloadapi",
-    "downloadapi": "(echo 'fetching api disabled' && exit 0) || npx vscode-dts dev"
+    "downloadapi": "npx vscode-dts dev"
   },
   "devDependencies": {
     "@types/vscode": "^1.102.0",

@@ -21,6 +21,16 @@ export interface IChatPullRequestContent {
 	linkTag: string;
 }
 
+class JoshBotUriHandler implements vscode.UriHandler {
+	handleUri(uri: vscode.Uri): vscode.ProviderResult<void> {
+		const query = new URLSearchParams(uri.query);
+		const command = uri.path;
+
+		// Just show an information message box
+		vscode.window.showInformationMessage(`JoshBot URI command received: ${command}`);
+	}
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 
@@ -28,9 +38,11 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Hello from JoshBot!');
 	}));
 
+	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
+
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.cloudButton', async (): Promise<IChatPullRequestContent> => {
 		return {
-			uri: vscode.Uri.parse('https://github.com/microsoft/vscode'),
+			uri: vscode.Uri.parse(`${vscode.env.uriScheme}://spcr-test.joshbot/test`),
 			title: 'Pull request by JoshBot',
 			description: 'This is the description of the pull request created by JoshBot.',
 			author: 'Author Name',

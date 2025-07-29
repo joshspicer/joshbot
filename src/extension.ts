@@ -5,11 +5,6 @@
 
 import * as vscode from 'vscode';
 
-async function getSessionContent(id: string, _token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-	const sessionManager = JoshBotSessionManager.getInstance();
-	return await sessionManager.getSessionContent(id, _token);
-}
-
 // Must match package.json's "contributes.chatSessions.[0].id"
 const CHAT_SESSION_TYPE = 'josh-bot';
 
@@ -34,6 +29,11 @@ class JoshBotUriHandler implements vscode.UriHandler {
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 
+	// Initialize session manager
+	const sessionManager = JoshBotSessionManager.getInstance();
+	sessionManager.initialize(context);
+
+	// Register basic commands
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.hello', () => {
 		vscode.window.showInformationMessage('Hello from JoshBot!');
 	}));
@@ -50,48 +50,62 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
-	const sessionManager = JoshBotSessionManager.getInstance();
-	sessionManager.initialize(context);
+	// Session management commands to exercise API functionality
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.createSession', async () => {
+		const name = await vscode.window.showInputBox({ prompt: 'Enter session name' });
+		const id = await sessionManager.createNewSession(name);
+		vscode.window.showInformationMessage(`Created session: ${id}`);
+	}));
 
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.deleteSession', async () => {
+		const sessions = await sessionManager.getSessionItems(new vscode.CancellationTokenSource().token);
+		const sessionLabels = sessions.map(s => ({ label: s.label, id: s.id }));
+		const selected = await vscode.window.showQuickPick(sessionLabels, { placeHolder: 'Select session to delete' });
+		if (selected) {
+			await sessionManager.deleteSession(selected.id);
+			vscode.window.showInformationMessage(`Deleted session: ${selected.label}`);
+		}
+	}));
+
+	// Test error handling
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.testError', async () => {
+		try {
+			await sessionManager.getSessionContent('non-existent', new vscode.CancellationTokenSource().token);
+		} catch (error) {
+			vscode.window.showErrorMessage(`Error handled correctly: ${error instanceof Error ? error.message : String(error)}`);
+		}
+	}));
+
+	// Register chat session providers
 	const provider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
 		label = vscode.l10n.t('JoshBot');
-		provideChatSessionItems = async (_token: vscode.CancellationToken) => {
-			return await sessionManager.getSessionItems(_token);
+		onDidChangeChatSessionItems = sessionManager.onDidChangeChatSessionItems;
+		
+		provideChatSessionItems = async (token: vscode.CancellationToken) => {
+			return await sessionManager.getSessionItems(token);
 		};
+		
 		provideChatSessionContent = async (id: string, token: vscode.CancellationToken) => {
-			return await getSessionContent(id, token);
+			return await sessionManager.getSessionContent(id, token);
 		};
-		// Events not used yet, but required by interface.
-		onDidChangeChatSessionItems = new vscode.EventEmitter<void>().event;
 	};
 
-	context.subscriptions.push(vscode.chat.registerChatSessionItemProvider(
-		CHAT_SESSION_TYPE,
-		provider
-	));
-
-	context.subscriptions.push(vscode.chat.registerChatSessionContentProvider(
-		CHAT_SESSION_TYPE,
-		provider
-	));
+	context.subscriptions.push(vscode.chat.registerChatSessionItemProvider(CHAT_SESSION_TYPE, provider));
+	context.subscriptions.push(vscode.chat.registerChatSessionContentProvider(CHAT_SESSION_TYPE, provider));
 }
 
 interface JoshBotSession extends vscode.ChatSession {
 	id: string;
 	name: string;
 	iconPath?: vscode.Uri | { light: vscode.Uri; dark: vscode.Uri };
-	history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>;
-	requestHandler: vscode.ChatRequestHandler;
-	activeResponseCallback?: (stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => Thenable<void>;
 }
 
 class JoshBotSessionManager {
 	private static instance: JoshBotSessionManager;
-	private _sessions: Map<string, JoshBotSession>;
-
-	private constructor() {
-		this._sessions = new Map<string, JoshBotSession>();
-	}
+	private _sessions: Map<string, JoshBotSession> = new Map();
+	private _onDidChangeChatSessionItems = new vscode.EventEmitter<void>();
+	
+	readonly onDidChangeChatSessionItems = this._onDidChangeChatSessionItems.event;
 
 	static getInstance(): JoshBotSessionManager {
 		if (!JoshBotSessionManager.instance) {
@@ -101,90 +115,99 @@ class JoshBotSessionManager {
 	}
 
 	initialize(_context: vscode.ExtensionContext): void {
-		// Create a default session
-		this.createDemoSession();
+		this.createDemoSessions();
 	}
 
-	private createDemoSession(): void {
-		const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
-		currentResponseParts.push(new vscode.ChatResponseMarkdownPart('hey'));
-		const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
-		const defaultSession: JoshBotSession = {
-			id: 'default-session',
-			name: 'JoshBot Chat',
+	private createDemoSessions(): void {
+		// Sample response for history
+		const sampleResponse = new vscode.ChatResponseTurn2(
+			[new vscode.ChatResponseMarkdownPart('Hello! I\'m JoshBot.')], 
+			{}, 
+			'joshbot'
+		);
+
+		// 1. Read-only session (no request handler)
+		this._sessions.set('readonly', {
+			id: 'readonly',
+			name: '📖 Read-only History',
 			history: [
-				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
-				response2 as vscode.ChatResponseTurn
+				new vscode.ChatRequestTurn2('What can you do?', undefined, [], 'joshbot', [], []),
+				sampleResponse as vscode.ChatResponseTurn
+			],
+			requestHandler: undefined // Read-only!
+		});
+
+		// 2. Interactive session with simple echo
+		this._sessions.set('interactive', {
+			id: 'interactive',
+			name: '💬 Interactive Chat',
+			history: [],
+			requestHandler: async (request, _context, stream, _token) => {
+				stream.markdown(`**Echo:** ${request.prompt}`);
+				return { metadata: { command: '', sessionId: 'interactive' } };
+			}
+		});
+
+		// 3. Session with active streaming response
+		this._sessions.set('streaming', {
+			id: 'streaming',
+			name: '⚡ Live Streaming',
+			history: [
+				new vscode.ChatRequestTurn2('Start streaming', undefined, [], 'joshbot', [], []),
+				sampleResponse as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
-				return { metadata: { command: '', sessionId: 'default-session' } };
+				await new Promise(resolve => setTimeout(resolve, 500));
+				stream.markdown(`**Processing:** ${request.prompt}`);
+				return { metadata: { command: '', sessionId: 'streaming' } };
 			}
-		};
+		});
 
-		this._sessions.set(defaultSession.id, defaultSession);
-
-		const ongoingSession: JoshBotSession = {
-			id: 'ongoing-session',
-			name: 'JoshBot Chat ongoing',
-			history: [
-				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
-				response2 as vscode.ChatResponseTurn
-			],
-			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
-				await new Promise(resolve => setTimeout(resolve, 2000));
-				stream.markdown(`You said: "${request.prompt}"`);
-				return { metadata: { command: '', sessionId: 'ongoing-session' } };
-			}
-		};
-		this._sessions.set(ongoingSession.id, ongoingSession);
+		this._onDidChangeChatSessionItems.fire();
 	}
 
 	async getSessionContent(id: string, _token: vscode.CancellationToken): Promise<vscode.ChatSession> {
 		const session = this._sessions.get(id);
 		if (!session) {
-			throw new Error(`Session with id ${id} not found`);
+			throw new Error(`Session '${id}' not found`);
 		}
 
-		if (session.id === 'ongoing-session') {
+		// Add active streaming for the streaming session
+		if (id === 'streaming') {
 			return {
-				history: session.history,
-				requestHandler: session.requestHandler,
+				...session,
 				activeResponseCallback: async (stream) => {
-					// loop 1 to 5
-					for (let i = 0; i < 5; i++) {
-						stream.markdown(`\nthinking step ${i + 1}... \n`);
-						await new Promise(resolve => setTimeout(resolve, 1000));
+					for (let i = 1; i <= 3; i++) {
+						stream.markdown(`\n⏳ Processing step ${i}/3...`);
+						await new Promise(resolve => setTimeout(resolve, 800));
 					}
-
-					stream.markdown(`Done`);
+					stream.markdown('\n✅ Complete!');
 				}
 			};
-		} else {
-			return {
-				history: session.history,
-				requestHandler: session.requestHandler,
-				activeResponseCallback: undefined
-			};
 		}
+
+		return session;
 	}
 
 	async createNewSession(name?: string): Promise<string> {
-		const sessionId = `session-${Date.now()}`;
-		const newSession: JoshBotSession = {
-			id: sessionId,
-			name: name || `JoshBot Session ${this._sessions.size + 1}`,
+		const id = `session-${Date.now()}`;
+		this._sessions.set(id, {
+			id,
+			name: name || `🆕 Session ${this._sessions.size + 1}`,
 			history: [],
 			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
-				return { metadata: { command: '', sessionId } };
+				stream.markdown(`**New session echo:** ${request.prompt}`);
+				return { metadata: { command: '', sessionId: id } };
 			}
-		};
-		this._sessions.set(sessionId, newSession);
-		return sessionId;
+		});
+		this._onDidChangeChatSessionItems.fire();
+		return id;
+	}
+
+	async deleteSession(id: string): Promise<void> {
+		if (this._sessions.delete(id)) {
+			this._onDidChangeChatSessionItems.fire();
+		}
 	}
 
 	async getSessionItems(_token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {

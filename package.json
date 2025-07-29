@@ -61,6 +61,21 @@
         "command": "joshbot.cloudButton",
         "title": "Cloud Button",
         "category": "JoshBot"
+      },
+      {
+        "command": "joshbot.createSession",
+        "title": "Create Chat Session",
+        "category": "JoshBot"
+      },
+      {
+        "command": "joshbot.deleteSession",
+        "title": "Delete Chat Session",
+        "category": "JoshBot"
+      },
+      {
+        "command": "joshbot.testError",
+        "title": "Test Error Handling",
+        "category": "JoshBot"
       }
     ],
     "configuration": {

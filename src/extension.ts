@@ -61,6 +61,13 @@ export function activate(context: vscode.ExtensionContext) {
 		provideChatSessionContent = async (id: string, token: vscode.CancellationToken) => {
 			return await getSessionContent(id, token);
 		};
+		provideNewChatSessionItem = async (options: { prompt?: string; history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>; metadata?: any; }, token: vscode.CancellationToken): Promise<vscode.ChatSessionItem> => {
+			const session =  await sessionManager.createNewSession(options.prompt, options.history);
+			return {
+				id: session.id,
+				label: session.name,
+			};
+		};
 		// Events not used yet, but required by interface.
 		onDidChangeChatSessionItems = new vscode.EventEmitter<void>().event;
 	};
@@ -171,12 +178,15 @@ class JoshBotSessionManager {
 		}
 	}
 
-	async createNewSession(name?: string): Promise<string> {
+	async createNewSession(input?: string, history?: readonly any[]): Promise<JoshBotSession> {
 		const sessionId = `session-${Date.now()}`;
 		const newSession: JoshBotSession = {
 			id: sessionId,
-			name: name || `JoshBot Session ${this._sessions.size + 1}`,
-			history: [],
+			name: `JoshBot Session ${this._sessions.size + 1}`,
+			history: [
+				...(history || []),
+				new vscode.ChatRequestTurn2(`Prompted with: ${input}`, undefined, [], 'joshbot', [], []),
+			],
 			requestHandler: async (request, _context, stream, _token) => {
 				// Simple echo bot for demo purposes
 				stream.markdown(`You said: "${request.prompt}"`);
@@ -184,7 +194,7 @@ class JoshBotSessionManager {
 			}
 		};
 		this._sessions.set(sessionId, newSession);
-		return sessionId;
+		return newSession;
 	}
 
 	async getSessionItems(_token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {

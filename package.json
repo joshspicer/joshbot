@@ -12,7 +12,8 @@
     "chatSessionsProvider",
     "chatParticipantAdditions",
     "chatParticipantPrivate",
-    "remoteCodingAgents"
+    "remoteCodingAgents",
+    "languageModelThinkingPart"
   ],
   "main": "./out/extension.js",
   "categories": [

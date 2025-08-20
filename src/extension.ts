@@ -41,13 +41,20 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
 
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.cloudButton', async (): Promise<IChatPullRequestContent> => {
-		return {
+		const result = {
 			uri: vscode.Uri.parse(`${vscode.env.uriScheme}://spcr-test.joshbot/test`),
 			title: 'Pull request by JoshBot',
 			description: 'This is the description of the pull request created by JoshBot.',
 			author: 'Author Name',
 			linkTag: 'PR-123'
-		}
+		};
+
+		// Show the chat session after creating the pull request content
+		await vscode.window.showChatSession(CHAT_SESSION_TYPE, 'default-session', { 
+			viewColumn: vscode.ViewColumn.One 
+		});
+
+		return result;
 	}));
 
 	const sessionManager = JoshBotSessionManager.getInstance();

@@ -195,7 +195,6 @@ class JoshBotSessionManager {
 				...(input ? [new vscode.ChatRequestTurn2(`Prompted with: ${input}`, undefined, [], 'joshbot', [], [])] : [])
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-
 				// If there's no history, this is a new session.
 				if (!_context.history.length) {
 					stream.markdown(`Welcome to JoshBot! Configuring your session....`);

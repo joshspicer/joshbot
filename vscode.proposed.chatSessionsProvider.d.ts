@@ -38,7 +38,7 @@ declare module 'vscode' {
 		 *
 		 * @param options Options for the new session including an optional initial prompt and history
 		 * @param token A cancellation token
-		 * @returns A session ID for the newly created session
+		 * @returns Metadata for the chat session
 		 */
 		provideNewChatSessionItem?(options: {
 			/**

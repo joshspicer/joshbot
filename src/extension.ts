@@ -50,8 +50,8 @@ export function activate(context: vscode.ExtensionContext) {
 		};
 
 		// Show the chat session after creating the pull request content
-		await vscode.window.showChatSession(CHAT_SESSION_TYPE, 'default-session', { 
-			viewColumn: vscode.ViewColumn.One 
+		await vscode.window.showChatSession(CHAT_SESSION_TYPE, 'default-session', {
+			viewColumn: vscode.ViewColumn.One
 		});
 
 		return result;
@@ -69,7 +69,7 @@ export function activate(context: vscode.ExtensionContext) {
 			return await getSessionContent(id, token);
 		};
 		provideNewChatSessionItem = async (options: { prompt?: string; history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>; metadata?: any; }, token: vscode.CancellationToken): Promise<vscode.ChatSessionItem> => {
-			const session =  await sessionManager.createNewSession(options.prompt, options.history);
+			const session = await sessionManager.createNewSession(options.prompt, options.history);
 			return {
 				id: session.id,
 				label: session.name,
@@ -133,6 +133,19 @@ class JoshBotSessionManager {
 			requestHandler: async (request, _context, stream, _token) => {
 				// Simple echo bot for demo purposes
 				stream.markdown(`You said: "${request.prompt}"`);
+
+				const multiDiffPart = new vscode.ChatResponseMultiDiffPart(
+					[
+						{
+							originalUri: vscode.Uri.file('/path/to/original/file'),
+							modifiedUri: vscode.Uri.file('/path/to/modified/file'),
+							goToFileUri: vscode.Uri.file('/path/to/file'),
+						}
+					],
+					'Diff'
+				);
+				stream.push(multiDiffPart);
+
 				return { metadata: { command: '', sessionId: 'default-session' } };
 			}
 		};

@@ -78,6 +78,15 @@
           "description": "Enable to contribute a cloud button for Josh Bot."
         }
       }
+    },
+    "menus": {
+      "chat/multiDiff/context": [
+        {
+          "command": "workbench.action.toggleLightDarkThemes",
+          "group": "1_basic",
+          "order": 1
+        }
+      ]
     }
   },
   "scripts": {

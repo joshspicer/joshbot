@@ -74,6 +74,12 @@
         "title": "Squirrel!",
         "category": "JoshBot",
         "icon": "$(squirrel)"
+      },
+      {
+        "command": "joshbot.translateToGerman",
+        "title": "Translate to German",
+        "category": "JoshBot",
+        "icon": "$(globe)"
       }
     ],
     "configuration": {
@@ -99,6 +105,10 @@
         },
         {
           "command": "joshbot.snake",
+          "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.translateToGerman",
           "when": "chatSessionType == josh-bot"
         }
       ]

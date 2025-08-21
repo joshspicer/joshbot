@@ -31,6 +31,56 @@ class JoshBotUriHandler implements vscode.UriHandler {
 	}
 }
 
+// Simple German translation function for common words and phrases
+function translateToGerman(text: string): string {
+	const translations: { [key: string]: string } = {
+		'hello': 'hallo',
+		'goodbye': 'auf wiedersehen',
+		'thank you': 'danke',
+		'thanks': 'danke',
+		'please': 'bitte',
+		'yes': 'ja',
+		'no': 'nein',
+		'good morning': 'guten morgen',
+		'good evening': 'guten abend',
+		'good night': 'gute nacht',
+		'how are you': 'wie geht es dir',
+		'what is your name': 'wie heißt du',
+		'my name is': 'mein name ist',
+		'i love you': 'ich liebe dich',
+		'excuse me': 'entschuldigung',
+		'sorry': 'entschuldigung',
+		'water': 'wasser',
+		'food': 'essen',
+		'house': 'haus',
+		'car': 'auto',
+		'dog': 'hund',
+		'cat': 'katze',
+		'translate to german': 'ins deutsche übersetzen'
+	};
+
+	const lowerText = text.toLowerCase().trim();
+	
+	// Check for exact matches first
+	if (translations[lowerText]) {
+		return translations[lowerText];
+	}
+	
+	// Check for partial matches and replace words
+	let result = lowerText;
+	for (const [english, german] of Object.entries(translations)) {
+		const regex = new RegExp('\\b' + english.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+		result = result.replace(regex, german);
+	}
+	
+	// If no translation found, return original with a note
+	if (result === lowerText) {
+		return `${text} (Übersetzung nicht verfügbar)`;
+	}
+	
+	return result;
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 
@@ -42,6 +92,16 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.squirrel', () => {
 		vscode.window.showInformationMessage('Squirrel! 🐿️');
+	}));
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.translateToGerman', async () => {
+		const input = await vscode.window.showInputBox({
+			placeHolder: 'Enter text to translate to German',
+			prompt: 'Text to translate'
+		});
+		if (input) {
+			const translated = translateToGerman(input);
+			vscode.window.showInformationMessage(`German: ${translated}`);
+		}
 	}));
 
 	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
@@ -137,20 +197,40 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
+				const prompt = request.prompt.toLowerCase();
+				
+				// Check if this is a translation request
+				if (prompt.includes('translate') && prompt.includes('german')) {
+					// Extract text to translate (simple heuristic)
+					let textToTranslate = request.prompt;
+					
+					// Remove common translation prefixes
+					textToTranslate = textToTranslate.replace(/^(translate|translate to german|please translate|can you translate)\s*/i, '');
+					textToTranslate = textToTranslate.replace(/\s*(to german|into german|in german)$/i, '');
+					textToTranslate = textToTranslate.trim();
+					
+					if (textToTranslate) {
+						const translated = translateToGerman(textToTranslate);
+						stream.markdown(`**Translation to German:** ${translated}`);
+					} else {
+						stream.markdown('Please provide text to translate to German. For example: "translate hello to german"');
+					}
+				} else {
+					// Simple echo bot for demo purposes
+					stream.markdown(`You said: "${request.prompt}"`);
 
-				const multiDiffPart = new vscode.ChatResponseMultiDiffPart(
-					[
-						{
-							originalUri: vscode.Uri.file('/path/to/original/file'),
-							modifiedUri: vscode.Uri.file('/path/to/modified/file'),
-							goToFileUri: vscode.Uri.file('/path/to/file'),
-						}
-					],
-					'Diff'
-				);
-				stream.push(multiDiffPart);
+					const multiDiffPart = new vscode.ChatResponseMultiDiffPart(
+						[
+							{
+								originalUri: vscode.Uri.file('/path/to/original/file'),
+								modifiedUri: vscode.Uri.file('/path/to/modified/file'),
+								goToFileUri: vscode.Uri.file('/path/to/file'),
+							}
+						],
+						'Diff'
+					);
+					stream.push(multiDiffPart);
+				}
 
 				return { metadata: { command: '', sessionId: 'default-session' } };
 			}
@@ -166,9 +246,31 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
 				await new Promise(resolve => setTimeout(resolve, 2000));
-				stream.markdown(`You said: "${request.prompt}"`);
+				
+				const prompt = request.prompt.toLowerCase();
+				
+				// Check if this is a translation request
+				if (prompt.includes('translate') && prompt.includes('german')) {
+					// Extract text to translate (simple heuristic)
+					let textToTranslate = request.prompt;
+					
+					// Remove common translation prefixes
+					textToTranslate = textToTranslate.replace(/^(translate|translate to german|please translate|can you translate)\s*/i, '');
+					textToTranslate = textToTranslate.replace(/\s*(to german|into german|in german)$/i, '');
+					textToTranslate = textToTranslate.trim();
+					
+					if (textToTranslate) {
+						const translated = translateToGerman(textToTranslate);
+						stream.markdown(`**Translation to German:** ${translated}`);
+					} else {
+						stream.markdown('Please provide text to translate to German. For example: "translate hello to german"');
+					}
+				} else {
+					// Simple echo bot for demo purposes
+					stream.markdown(`You said: "${request.prompt}"`);
+				}
+				
 				return { metadata: { command: '', sessionId: 'ongoing-session' } };
 			}
 		};
@@ -220,8 +322,29 @@ class JoshBotSessionManager {
 					return { metadata: { command: '', sessionId } };
 				}
 
-				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
+				const prompt = request.prompt.toLowerCase();
+				
+				// Check if this is a translation request
+				if (prompt.includes('translate') && prompt.includes('german')) {
+					// Extract text to translate (simple heuristic)
+					let textToTranslate = request.prompt;
+					
+					// Remove common translation prefixes
+					textToTranslate = textToTranslate.replace(/^(translate|translate to german|please translate|can you translate)\s*/i, '');
+					textToTranslate = textToTranslate.replace(/\s*(to german|into german|in german)$/i, '');
+					textToTranslate = textToTranslate.trim();
+					
+					if (textToTranslate) {
+						const translated = translateToGerman(textToTranslate);
+						stream.markdown(`**Translation to German:** ${translated}`);
+					} else {
+						stream.markdown('Please provide text to translate to German. For example: "translate hello to german"');
+					}
+				} else {
+					// Simple echo bot for demo purposes
+					stream.markdown(`You said: "${request.prompt}"`);
+				}
+				
 				return { metadata: { command: '', sessionId } };
 			}
 		};

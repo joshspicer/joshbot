@@ -62,6 +62,18 @@
         "command": "joshbot.cloudButton",
         "title": "Cloud Button",
         "category": "JoshBot"
+      },
+      {
+        "command": "joshbot.snake",
+        "title": "Snake!",
+        "category": "JoshBot",
+        "icon": "$(snake)"
+      },
+      {
+        "command": "joshbot.squirrel",
+        "title": "Squirrel!",
+        "category": "JoshBot",
+        "icon": "$(squirrel)"
       }
     ],
     "configuration": {
@@ -82,9 +94,12 @@
     "menus": {
       "chat/multiDiff/context": [
         {
-          "command": "workbench.action.toggleLightDarkThemes",
-          "group": "1_basic",
-          "order": 1
+          "command": "joshbot.squirrel",
+          "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.snake",
+          "when": "chatSessionType == josh-bot"
         }
       ]
     }

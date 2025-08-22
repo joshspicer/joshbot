@@ -197,10 +197,29 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-				const prompt = request.prompt.toLowerCase();
+				const prompt = request.prompt.toLowerCase().trim();
 				
+				// Check if this is a test or initial message
+				if (prompt === 'test' || prompt === 'hello' || prompt === 'hi' || prompt.includes('test message')) {
+					stream.markdown(`👋 **Welcome to JoshBot!**
+
+I'm a dedicated coding assistant that can help you with various tasks. Here's what I can do:
+
+🔤 **Translation**: I can translate common English words and phrases to German
+   - Try: "translate hello to german"
+   - Try: "translate thank you to german"
+
+💬 **Chat**: I can respond to your messages and have conversations
+
+🛠️ **Commands**: I have several commands available:
+   - Snake command 🐍
+   - Squirrel command 🐿️
+   - Translation tools
+
+Feel free to ask me anything or try any of the features above!`);
+				}
 				// Check if this is a translation request
-				if (prompt.includes('translate') && prompt.includes('german')) {
+				else if (prompt.includes('translate') && prompt.includes('german')) {
 					// Extract text to translate (simple heuristic)
 					let textToTranslate = request.prompt;
 					
@@ -248,10 +267,29 @@ class JoshBotSessionManager {
 			requestHandler: async (request, _context, stream, _token) => {
 				await new Promise(resolve => setTimeout(resolve, 2000));
 				
-				const prompt = request.prompt.toLowerCase();
+				const prompt = request.prompt.toLowerCase().trim();
 				
+				// Check if this is a test or initial message
+				if (prompt === 'test' || prompt === 'hello' || prompt === 'hi' || prompt.includes('test message')) {
+					stream.markdown(`👋 **Welcome to JoshBot!**
+
+I'm a dedicated coding assistant that can help you with various tasks. Here's what I can do:
+
+🔤 **Translation**: I can translate common English words and phrases to German
+   - Try: "translate hello to german"
+   - Try: "translate thank you to german"
+
+💬 **Chat**: I can respond to your messages and have conversations
+
+🛠️ **Commands**: I have several commands available:
+   - Snake command 🐍
+   - Squirrel command 🐿️
+   - Translation tools
+
+Feel free to ask me anything or try any of the features above!`);
+				}
 				// Check if this is a translation request
-				if (prompt.includes('translate') && prompt.includes('german')) {
+				else if (prompt.includes('translate') && prompt.includes('german')) {
 					// Extract text to translate (simple heuristic)
 					let textToTranslate = request.prompt;
 					
@@ -322,10 +360,29 @@ class JoshBotSessionManager {
 					return { metadata: { command: '', sessionId } };
 				}
 
-				const prompt = request.prompt.toLowerCase();
+				const prompt = request.prompt.toLowerCase().trim();
 				
+				// Check if this is a test or initial message
+				if (prompt === 'test' || prompt === 'hello' || prompt === 'hi' || prompt.includes('test message')) {
+					stream.markdown(`👋 **Welcome to JoshBot!**
+
+I'm a dedicated coding assistant that can help you with various tasks. Here's what I can do:
+
+🔤 **Translation**: I can translate common English words and phrases to German
+   - Try: "translate hello to german"
+   - Try: "translate thank you to german"
+
+💬 **Chat**: I can respond to your messages and have conversations
+
+🛠️ **Commands**: I have several commands available:
+   - Snake command 🐍
+   - Squirrel command 🐿️
+   - Translation tools
+
+Feel free to ask me anything or try any of the features above!`);
+				}
 				// Check if this is a translation request
-				if (prompt.includes('translate') && prompt.includes('german')) {
+				else if (prompt.includes('translate') && prompt.includes('german')) {
 					// Extract text to translate (simple heuristic)
 					let textToTranslate = request.prompt;
 					

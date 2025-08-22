@@ -226,7 +226,91 @@ class BrowserMCPServer {
           required: ['key'],
         },
       },
-      // Add more browser tools here...
+      {
+        name: 'playwright-browser_drag',
+        description: 'Perform drag and drop between two elements',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            startElement: { type: 'string', description: 'Human-readable source element description' },
+            startRef: { type: 'string', description: 'Exact source element reference from the page snapshot' },
+            endElement: { type: 'string', description: 'Human-readable target element description' },
+            endRef: { type: 'string', description: 'Exact target element reference from the page snapshot' },
+          },
+          required: ['startElement', 'startRef', 'endElement', 'endRef'],
+        },
+      },
+      {
+        name: 'playwright-browser_navigate_back',
+        description: 'Go back to the previous page',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'playwright-browser_navigate_forward',
+        description: 'Go forward to the next page',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'playwright-browser_console_messages',
+        description: 'Returns all console messages',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'playwright-browser_network_requests',
+        description: 'Returns all network requests since loading the page',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'playwright-browser_handle_dialog',
+        description: 'Handle a dialog (alert, confirm, prompt)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            accept: { type: 'boolean', description: 'Whether to accept the dialog' },
+            promptText: { type: 'string', description: 'The text of the prompt in case of a prompt dialog' },
+          },
+          required: ['accept'],
+        },
+      },
+      {
+        name: 'playwright-browser_file_upload',
+        description: 'Upload one or multiple files',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            paths: { type: 'array', items: { type: 'string' }, description: 'The absolute paths to the files to upload' },
+          },
+          required: ['paths'],
+        },
+      },
+      {
+        name: 'playwright-browser_close',
+        description: 'Close the browser page',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'playwright-browser_install',
+        description: 'Install the browser specified in the config',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
     ];
   }
 

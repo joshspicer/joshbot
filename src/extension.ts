@@ -21,6 +21,214 @@ export interface IChatPullRequestContent {
 	linkTag: string;
 }
 
+// Enhanced pull request data structure for better functionality
+interface EnhancedPullRequest {
+	id: string;
+	title: string;
+	description: string;
+	author: string;
+	status: 'open' | 'closed' | 'merged';
+	url: string;
+	branch: string;
+	targetBranch: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+// Sample pull requests for demonstration
+const SAMPLE_PULL_REQUESTS: EnhancedPullRequest[] = [
+	{
+		id: 'PR-123',
+		title: 'Add new chat session functionality',
+		description: 'This PR adds enhanced chat session management with better user experience and improved error handling.',
+		author: 'JoshBot',
+		status: 'open',
+		url: 'https://github.com/joshspicer/joshbot/pull/123',
+		branch: 'feature/chat-sessions',
+		targetBranch: 'main',
+		createdAt: '2024-01-15T10:30:00Z',
+		updatedAt: '2024-01-16T14:20:00Z'
+	},
+	{
+		id: 'PR-124',
+		title: 'Fix translation service bug',
+		description: 'Resolves issue with German translation not working for certain phrases. Improves translation accuracy and adds more common phrases.',
+		author: 'DevBot',
+		status: 'merged',
+		url: 'https://github.com/joshspicer/joshbot/pull/124',
+		branch: 'bugfix/translation-service',
+		targetBranch: 'main',
+		createdAt: '2024-01-14T09:15:00Z',
+		updatedAt: '2024-01-15T16:45:00Z'
+	},
+	{
+		id: 'PR-125',
+		title: 'Implement VS Code theming commands',
+		description: 'Adds three new theming commands: Zen Mode, Party Mode, and Rainbow Mode for enhanced user customization.',
+		author: 'ThemeBot',
+		status: 'open',
+		url: 'https://github.com/joshspicer/joshbot/pull/125',
+		branch: 'feature/theming-commands',
+		targetBranch: 'main',
+		createdAt: '2024-01-16T11:00:00Z',
+		updatedAt: '2024-01-16T15:30:00Z'
+	}
+];
+
+// Helper functions for pull request operations
+function searchPullRequests(query: string): EnhancedPullRequest[] {
+	const lowercaseQuery = query.toLowerCase();
+	return SAMPLE_PULL_REQUESTS.filter(pr => 
+		pr.title.toLowerCase().includes(lowercaseQuery) ||
+		pr.description.toLowerCase().includes(lowercaseQuery) ||
+		pr.author.toLowerCase().includes(lowercaseQuery) ||
+		pr.id.toLowerCase().includes(lowercaseQuery)
+	);
+}
+
+function getPullRequestsByStatus(status: 'open' | 'closed' | 'merged'): EnhancedPullRequest[] {
+	return SAMPLE_PULL_REQUESTS.filter(pr => pr.status === status);
+}
+
+function formatPullRequestForChat(pr: EnhancedPullRequest): string {
+	const statusEmoji = pr.status === 'open' ? '🟢' : pr.status === 'merged' ? '🟣' : '🔴';
+	const updatedDate = new Date(pr.updatedAt).toLocaleDateString();
+	
+	return `${statusEmoji} **${pr.id}: ${pr.title}**
+📝 ${pr.description}
+👤 Author: ${pr.author}
+🌿 ${pr.branch} → ${pr.targetBranch}
+📅 Updated: ${updatedDate}
+🔗 [View Pull Request](${pr.url})`;
+}
+
+function detectPullRequestIntent(prompt: string): { intent: string; query?: string; status?: string } | null {
+	const lowercasePrompt = prompt.toLowerCase();
+	
+	if (lowercasePrompt.includes('show pull request') || lowercasePrompt.includes('list prs') || lowercasePrompt.includes('pull requests')) {
+		// Check for status filters
+		if (lowercasePrompt.includes('open')) {
+			return { intent: 'list', status: 'open' };
+		}
+		if (lowercasePrompt.includes('merged')) {
+			return { intent: 'list', status: 'merged' };
+		}
+		if (lowercasePrompt.includes('closed')) {
+			return { intent: 'list', status: 'closed' };
+		}
+		return { intent: 'list' };
+	}
+	
+	if (lowercasePrompt.includes('search pr') || lowercasePrompt.includes('find pull request')) {
+		// Extract search query
+		const searchMatch = lowercasePrompt.match(/(?:search pr|find pull request)\s+(.+)/);
+		if (searchMatch) {
+			return { intent: 'search', query: searchMatch[1] };
+		}
+		return { intent: 'search' };
+	}
+	
+	if (lowercasePrompt.includes('pr status') || lowercasePrompt.includes('pull request status')) {
+		return { intent: 'status' };
+	}
+	
+	return null;
+}
+
+// Handle pull request intents and update the chat stream
+async function handlePullRequestIntent(
+	intent: { intent: string; query?: string; status?: string }, 
+	stream: vscode.ChatResponseStream
+): Promise<void> {
+	switch (intent.intent) {
+		case 'list':
+			if (intent.status) {
+				const filteredPRs = getPullRequestsByStatus(intent.status as 'open' | 'closed' | 'merged');
+				stream.markdown(`## ${intent.status.charAt(0).toUpperCase() + intent.status.slice(1)} Pull Requests\n`);
+				
+				if (filteredPRs.length === 0) {
+					stream.markdown(`No ${intent.status} pull requests found.`);
+				} else {
+					for (const pr of filteredPRs) {
+						stream.markdown(formatPullRequestForChat(pr) + '\n\n');
+						
+						// Use ChatResponsePullRequestPart for rich display
+						const prPart = new vscode.ChatResponsePullRequestPart(
+							vscode.Uri.parse(pr.url),
+							pr.title,
+							pr.description,
+							pr.author,
+							pr.id
+						);
+						stream.push(prPart);
+					}
+				}
+			} else {
+				stream.markdown(`## All Pull Requests\n`);
+				for (const pr of SAMPLE_PULL_REQUESTS) {
+					stream.markdown(formatPullRequestForChat(pr) + '\n\n');
+					
+					// Use ChatResponsePullRequestPart for rich display
+					const prPart = new vscode.ChatResponsePullRequestPart(
+						vscode.Uri.parse(pr.url),
+						pr.title,
+						pr.description,
+						pr.author,
+						pr.id
+					);
+					stream.push(prPart);
+				}
+			}
+			break;
+			
+		case 'search':
+			if (intent.query) {
+				const searchResults = searchPullRequests(intent.query);
+				stream.markdown(`## Search Results for "${intent.query}"\n`);
+				
+				if (searchResults.length === 0) {
+					stream.markdown(`No pull requests found matching "${intent.query}".`);
+				} else {
+					for (const pr of searchResults) {
+						stream.markdown(formatPullRequestForChat(pr) + '\n\n');
+						
+						// Use ChatResponsePullRequestPart for rich display
+						const prPart = new vscode.ChatResponsePullRequestPart(
+							vscode.Uri.parse(pr.url),
+							pr.title,
+							pr.description,
+							pr.author,
+							pr.id
+						);
+						stream.push(prPart);
+					}
+				}
+			} else {
+				stream.markdown('Please provide a search query. For example: "search pr translation" or "find pull request theming"');
+			}
+			break;
+			
+		case 'status':
+			const openCount = getPullRequestsByStatus('open').length;
+			const mergedCount = getPullRequestsByStatus('merged').length;
+			const closedCount = getPullRequestsByStatus('closed').length;
+			
+			stream.markdown(`## Pull Request Status Summary\n\n` +
+				`🟢 **Open:** ${openCount}\n` +
+				`🟣 **Merged:** ${mergedCount}\n` +
+				`🔴 **Closed:** ${closedCount}\n\n` +
+				`**Total:** ${SAMPLE_PULL_REQUESTS.length} pull requests`);
+			break;
+			
+		default:
+			stream.markdown('I can help you with pull requests! Try:\n' +
+				'• "show pull requests" - list all PRs\n' +
+				'• "show open pull requests" - filter by status\n' +
+				'• "search pr translation" - search PRs\n' +
+				'• "pr status" - get status summary');
+	}
+}
+
 class JoshBotUriHandler implements vscode.UriHandler {
 	handleUri(uri: vscode.Uri): vscode.ProviderResult<void> {
 		const query = new URLSearchParams(uri.query);
@@ -101,6 +309,42 @@ export function activate(context: vscode.ExtensionContext) {
 		if (input) {
 			const translated = translateToGerman(input);
 			vscode.window.showInformationMessage(`German: ${translated}`);
+		}
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.showPullRequests', async () => {
+		const options = ['All Pull Requests', 'Open PRs', 'Merged PRs', 'Closed PRs'];
+		const selected = await vscode.window.showQuickPick(options, {
+			placeHolder: 'Select pull request filter'
+		});
+
+		if (selected) {
+			let pullRequests: EnhancedPullRequest[];
+			switch (selected) {
+				case 'Open PRs':
+					pullRequests = getPullRequestsByStatus('open');
+					break;
+				case 'Merged PRs':
+					pullRequests = getPullRequestsByStatus('merged');
+					break;
+				case 'Closed PRs':
+					pullRequests = getPullRequestsByStatus('closed');
+					break;
+				default:
+					pullRequests = SAMPLE_PULL_REQUESTS;
+			}
+
+			if (pullRequests.length === 0) {
+				vscode.window.showInformationMessage('No pull requests found for the selected filter.');
+				return;
+			}
+
+			// Show in chat session with pull request information
+			await vscode.window.showChatSession(CHAT_SESSION_TYPE, 'default-session', {
+				viewColumn: vscode.ViewColumn.One
+			});
+
+			// The chat session will handle displaying the pull requests
 		}
 	}));
 
@@ -199,6 +443,13 @@ class JoshBotSessionManager {
 			requestHandler: async (request, _context, stream, _token) => {
 				const prompt = request.prompt.toLowerCase();
 				
+				// Check for pull request intents first
+				const prIntent = detectPullRequestIntent(request.prompt);
+				if (prIntent) {
+					await handlePullRequestIntent(prIntent, stream);
+					return { metadata: { command: '', sessionId: 'default-session' } };
+				}
+				
 				// Check if this is a translation request
 				if (prompt.includes('translate') && prompt.includes('german')) {
 					// Extract text to translate (simple heuristic)
@@ -249,6 +500,13 @@ class JoshBotSessionManager {
 				await new Promise(resolve => setTimeout(resolve, 2000));
 				
 				const prompt = request.prompt.toLowerCase();
+				
+				// Check for pull request intents first
+				const prIntent = detectPullRequestIntent(request.prompt);
+				if (prIntent) {
+					await handlePullRequestIntent(prIntent, stream);
+					return { metadata: { command: '', sessionId: 'ongoing-session' } };
+				}
 				
 				// Check if this is a translation request
 				if (prompt.includes('translate') && prompt.includes('german')) {
@@ -323,6 +581,13 @@ class JoshBotSessionManager {
 				}
 
 				const prompt = request.prompt.toLowerCase();
+				
+				// Check for pull request intents first
+				const prIntent = detectPullRequestIntent(request.prompt);
+				if (prIntent) {
+					await handlePullRequestIntent(prIntent, stream);
+					return { metadata: { command: '', sessionId } };
+				}
 				
 				// Check if this is a translation request
 				if (prompt.includes('translate') && prompt.includes('german')) {

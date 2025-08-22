@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import { activateZenMode, activatePartyMode, activateRainbowMode } from './theming';
 
 async function getSessionContent(id: string, _token: vscode.CancellationToken): Promise<vscode.ChatSession> {
 	const sessionManager = JoshBotSessionManager.getInstance();
@@ -103,6 +104,11 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.window.showInformationMessage(`German: ${translated}`);
 		}
 	}));
+	
+	// Register theming commands
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.zenMode', activateZenMode));
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.partyMode', activatePartyMode));
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.rainbowMode', activateRainbowMode));
 
 	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
 

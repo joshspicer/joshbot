@@ -11,7 +11,10 @@
 		"alwaysStrict": true,
 		"noImplicitAny": true,
 		"noImplicitReturns": true,
-		"experimentalDecorators": true
+		"experimentalDecorators": true,
+		"moduleResolution": "node",
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true
 	},
 	"include": ["src/**/*", "vscode.d.ts", "vscode.proposed.*"]
 }

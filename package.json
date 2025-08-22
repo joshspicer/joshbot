@@ -80,6 +80,12 @@
         "title": "Translate to German",
         "category": "JoshBot",
         "icon": "$(globe)"
+      },
+      {
+        "command": "joshbot.listMCPTools",
+        "title": "List MCP Tools",
+        "category": "JoshBot",
+        "icon": "$(tools)"
       }
     ],
     "configuration": {
@@ -127,13 +133,18 @@
     "downloadapi": "npx vscode-dts dev"
   },
   "devDependencies": {
-    "@types/vscode": "^1.102.0",
     "@types/node": "16.x",
+    "@types/vscode": "^1.102.0",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
+    "@vscode/dts": "^0.4.1",
     "@vscode/vsce": "^3.6.0",
-    "typescript": "^5.8.0",
-    "@vscode/dts": "^0.4.1"
+    "eslint": "^9.34.0",
+    "typescript": "^5.8.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/joshspicer/joshbot.git"

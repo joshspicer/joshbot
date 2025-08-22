@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import { MCPManager, MCPTool } from './mcp/mcp-manager';
 
 async function getSessionContent(id: string, _token: vscode.CancellationToken): Promise<vscode.ChatSession> {
 	const sessionManager = JoshBotSessionManager.getInstance();
@@ -104,6 +105,24 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.listMCPTools', async () => {
+		try {
+			const mcpManager = MCPManager.getInstance();
+			const tools = await mcpManager.getAvailableTools();
+			const githubTools = tools.filter(t => t.serverType === 'github');
+			const browserTools = tools.filter(t => t.serverType === 'browser');
+			
+			const message = `MCP Tools Available:\n` +
+				`GitHub Tools: ${githubTools.length}\n` +
+				`Browser Tools: ${browserTools.length}\n` +
+				`Total: ${tools.length} tools`;
+			
+			vscode.window.showInformationMessage(message);
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to list MCP tools: ${error instanceof Error ? error.message : String(error)}`);
+		}
+	}));
+
 	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
 
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.cloudButton', async (): Promise<IChatPullRequestContent> => {
@@ -181,6 +200,14 @@ class JoshBotSessionManager {
 	}
 
 	initialize(_context: vscode.ExtensionContext): void {
+		// Initialize MCP Manager
+		const mcpManager = MCPManager.getInstance();
+		mcpManager.initialize().then(() => {
+			console.log('MCP Manager initialized successfully');
+		}).catch((error) => {
+			console.error('Failed to initialize MCP Manager:', error);
+		});
+		
 		// Create a default session
 		this.createDemoSession();
 	}
@@ -198,9 +225,85 @@ class JoshBotSessionManager {
 			],
 			requestHandler: async (request, _context, stream, _token) => {
 				const prompt = request.prompt.toLowerCase();
+				const mcpManager = MCPManager.getInstance();
 				
-				// Check if this is a translation request
-				if (prompt.includes('translate') && prompt.includes('german')) {
+				// Check if this is an MCP tool request
+				if (prompt.includes('github') || prompt.includes('repo') || prompt.includes('issue') || prompt.includes('pull request')) {
+					try {
+						stream.markdown('🔧 **Using GitHub MCP Tools**\n\n');
+						
+						// Example: List GitHub tools
+						if (prompt.includes('list') && prompt.includes('tools')) {
+							const githubTools = await mcpManager.listGitHubTools();
+							stream.markdown('**Available GitHub Tools:**\n');
+							githubTools.forEach(tool => {
+								stream.markdown(`- **${tool.name}**: ${tool.description}\n`);
+							});
+						} else if (prompt.includes('file') && prompt.includes('content')) {
+							// Example tool invocation
+							const mockResult = await mcpManager.invokeTool('github-mcp-server-get_file_contents', {
+								owner: 'example',
+								repo: 'example-repo',
+								path: '/README.md'
+							});
+							stream.markdown(`**GitHub File Contents Result:**\n${mockResult.content[0].text}`);
+						} else {
+							stream.markdown('I can help you with GitHub operations! Try asking me to:\n');
+							stream.markdown('- "list github tools" - to see available GitHub tools\n');
+							stream.markdown('- "get file content from repo" - to fetch file contents\n');
+							stream.markdown('- "list issues in repository" - to get repository issues\n');
+						}
+					} catch (error) {
+						stream.markdown(`❌ Error using GitHub tools: ${error instanceof Error ? error.message : String(error)}`);
+					}
+				} else if (prompt.includes('browser') || prompt.includes('web') || prompt.includes('navigate') || prompt.includes('click')) {
+					try {
+						stream.markdown('🌐 **Using Browser MCP Tools**\n\n');
+						
+						// Example: List browser tools
+						if (prompt.includes('list') && prompt.includes('tools')) {
+							const browserTools = await mcpManager.listBrowserTools();
+							stream.markdown('**Available Browser Tools:**\n');
+							browserTools.forEach(tool => {
+								stream.markdown(`- **${tool.name}**: ${tool.description}\n`);
+							});
+						} else if (prompt.includes('navigate')) {
+							// Example tool invocation
+							const mockResult = await mcpManager.invokeTool('playwright-browser_navigate', {
+								url: 'https://example.com'
+							});
+							stream.markdown(`**Browser Navigation Result:**\n${mockResult.content[0].text}`);
+						} else if (prompt.includes('screenshot')) {
+							const mockResult = await mcpManager.invokeTool('playwright-browser_take_screenshot', {
+								filename: 'page.png'
+							});
+							stream.markdown(`**Browser Screenshot Result:**\n${mockResult.content[0].text}`);
+						} else {
+							stream.markdown('I can help you with browser automation! Try asking me to:\n');
+							stream.markdown('- "list browser tools" - to see available browser tools\n');
+							stream.markdown('- "navigate to website" - to open a website\n');
+							stream.markdown('- "take a screenshot" - to capture the current page\n');
+						}
+					} catch (error) {
+						stream.markdown(`❌ Error using browser tools: ${error instanceof Error ? error.message : String(error)}`);
+					}
+				} else if (prompt.includes('mcp') || prompt.includes('tools')) {
+					try {
+						stream.markdown('🛠️ **MCP Tools Available**\n\n');
+						const allTools = await mcpManager.getAvailableTools();
+						const githubToolsCount = allTools.filter(t => t.serverType === 'github').length;
+						const browserToolsCount = allTools.filter(t => t.serverType === 'browser').length;
+						
+						stream.markdown(`**Total MCP Tools:** ${allTools.length}\n`);
+						stream.markdown(`- **GitHub Tools:** ${githubToolsCount} tools\n`);
+						stream.markdown(`- **Browser Tools:** ${browserToolsCount} tools\n\n`);
+						
+						stream.markdown('Ask me about "github tools" or "browser tools" to see specific capabilities!');
+					} catch (error) {
+						stream.markdown(`❌ Error listing MCP tools: ${error instanceof Error ? error.message : String(error)}`);
+					}
+				} else if (prompt.includes('translate') && prompt.includes('german')) {
+					// Check if this is a translation request
 					// Extract text to translate (simple heuristic)
 					let textToTranslate = request.prompt;
 					
@@ -216,8 +319,13 @@ class JoshBotSessionManager {
 						stream.markdown('Please provide text to translate to German. For example: "translate hello to german"');
 					}
 				} else {
-					// Simple echo bot for demo purposes
-					stream.markdown(`You said: "${request.prompt}"`);
+					// Enhanced echo bot with MCP tool suggestions
+					stream.markdown(`You said: "${request.prompt}"\n\n`);
+					stream.markdown('💡 **Available capabilities:**\n');
+					stream.markdown('- Ask about **GitHub** operations (repos, issues, PRs)\n');
+					stream.markdown('- Ask about **browser** automation (navigation, clicks, screenshots)\n');
+					stream.markdown('- Ask me to **translate to German**\n');
+					stream.markdown('- Type "list mcp tools" to see all available tools\n');
 
 					const multiDiffPart = new vscode.ChatResponseMultiDiffPart(
 						[

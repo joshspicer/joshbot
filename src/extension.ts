@@ -81,6 +81,25 @@ function translateToGerman(text: string): string {
 	return result;
 }
 
+// Detect if the user is initiating a collaborative session
+function detectCollaborativeIntent(prompt: string): boolean {
+	const collaborativePhrasesPattern = /\b(lets?\s+(boogie|start|begin|go|collaborate|work|code)|let'?s\s+(boogie|start|begin|go|collaborate|work|code|get\s+started|do\s+this)|ready\s+to\s+(start|begin|work)|time\s+to\s+(start|begin|work|code)|shall\s+we\s+(start|begin))\b/i;
+	return collaborativePhrasesPattern.test(prompt.toLowerCase());
+}
+
+// Generate an engaging welcome message for collaborative sessions
+function generateCollaborativeWelcome(): string {
+	const welcomeMessages = [
+		"🚀 Awesome! Let's get this collaboration started! I'm here to help with coding tasks, debugging, code reviews, or any programming challenges you have in mind.",
+		"✨ Perfect! I'm ready to dive in and collaborate with you. Whether you need help with code, want to brainstorm solutions, or tackle a specific problem - let's make it happen!",
+		"🎯 Great energy! I'm excited to work together. I can assist with coding tasks, provide suggestions, help debug issues, or discuss technical approaches. What would you like to focus on?",
+		"💡 Let's rock this collaboration! I'm equipped to help with programming tasks, code analysis, problem-solving, and more. What's on your development agenda today?"
+	];
+	
+	const randomIndex = Math.floor(Math.random() * welcomeMessages.length);
+	return welcomeMessages[randomIndex] + "\n\n**Here's what I can help you with:**\n• Code writing and debugging\n• Technical problem solving\n• Code reviews and optimization\n• German translations\n• Architecture discussions\n\nWhat would you like to work on together?";
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 
@@ -199,6 +218,12 @@ class JoshBotSessionManager {
 			requestHandler: async (request, _context, stream, _token) => {
 				const prompt = request.prompt.toLowerCase();
 				
+				// Check if this is a collaborative initiation
+				if (detectCollaborativeIntent(request.prompt)) {
+					stream.markdown(generateCollaborativeWelcome());
+					return { metadata: { command: '', sessionId: 'default-session' } };
+				}
+				
 				// Check if this is a translation request
 				if (prompt.includes('translate') && prompt.includes('german')) {
 					// Extract text to translate (simple heuristic)
@@ -249,6 +274,12 @@ class JoshBotSessionManager {
 				await new Promise(resolve => setTimeout(resolve, 2000));
 				
 				const prompt = request.prompt.toLowerCase();
+				
+				// Check if this is a collaborative initiation
+				if (detectCollaborativeIntent(request.prompt)) {
+					stream.markdown(generateCollaborativeWelcome());
+					return { metadata: { command: '', sessionId: 'ongoing-session' } };
+				}
 				
 				// Check if this is a translation request
 				if (prompt.includes('translate') && prompt.includes('german')) {
@@ -323,6 +354,12 @@ class JoshBotSessionManager {
 				}
 
 				const prompt = request.prompt.toLowerCase();
+				
+				// Check if this is a collaborative initiation
+				if (detectCollaborativeIntent(request.prompt)) {
+					stream.markdown(generateCollaborativeWelcome());
+					return { metadata: { command: '', sessionId } };
+				}
 				
 				// Check if this is a translation request
 				if (prompt.includes('translate') && prompt.includes('german')) {

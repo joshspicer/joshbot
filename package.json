@@ -80,6 +80,12 @@
         "title": "Translate to German",
         "category": "JoshBot",
         "icon": "$(globe)"
+      },
+      {
+        "command": "joshbot.showPullRequests",
+        "title": "Show Pull Requests",
+        "category": "JoshBot",
+        "icon": "$(git-pull-request)"
       }
     ],
     "configuration": {
@@ -109,6 +115,10 @@
         },
         {
           "command": "joshbot.translateToGerman",
+          "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.showPullRequests",
           "when": "chatSessionType == josh-bot"
         }
       ]

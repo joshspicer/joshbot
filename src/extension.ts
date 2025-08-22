@@ -197,10 +197,32 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-				const prompt = request.prompt.toLowerCase();
+				const prompt = request.prompt.toLowerCase().trim();
 				
+				// Check for test messages and greetings
+				const testPatterns = /^(test|testing|hello|hi|hey|help|\?)$/;
+				const greetingPatterns = /^(hello|hi|hey|good morning|good afternoon|good evening)(\s|$)/;
+				
+				if (testPatterns.test(prompt) || greetingPatterns.test(prompt)) {
+					stream.markdown(`👋 **Welcome to JoshBot!** 
+
+I'm your dedicated coding assistant, great at complex tasks. Here's what I can help you with:
+
+🔤 **Translation**: I can translate common English words and phrases to German
+   - Try: "translate hello to german"
+
+🐍 **Fun Commands**: I have some playful commands available
+   - Snake command: 🐍 
+   - Squirrel command: 🐿️
+
+💬 **General Chat**: Feel free to ask me questions or have a conversation
+
+📁 **Code Assistance**: I'm designed to help with coding tasks and complex problems
+
+What would you like to try first?`);
+				}
 				// Check if this is a translation request
-				if (prompt.includes('translate') && prompt.includes('german')) {
+				else if (prompt.includes('translate') && prompt.includes('german')) {
 					// Extract text to translate (simple heuristic)
 					let textToTranslate = request.prompt;
 					
@@ -318,14 +340,40 @@ class JoshBotSessionManager {
 			requestHandler: async (request, _context, stream, _token) => {
 				// If there's no history, this is a new session.
 				if (!_context.history.length) {
-					stream.markdown(`Welcome to JoshBot! Configuring your session....`);
+					stream.markdown(`🎉 **Welcome to JoshBot!** 
+
+Your new session is ready! I'm here to help you with coding tasks, translations, and more.
+
+Type "test" or "help" to see what I can do, or just start chatting!`);
 					return { metadata: { command: '', sessionId } };
 				}
 
-				const prompt = request.prompt.toLowerCase();
+				const prompt = request.prompt.toLowerCase().trim();
 				
+				// Check for test messages and greetings
+				const testPatterns = /^(test|testing|hello|hi|hey|help|\?)$/;
+				const greetingPatterns = /^(hello|hi|hey|good morning|good afternoon|good evening)(\s|$)/;
+				
+				if (testPatterns.test(prompt) || greetingPatterns.test(prompt)) {
+					stream.markdown(`👋 **Hello there!** 
+
+Great to chat with you! Here's what I can help you with:
+
+🔤 **Translation**: I can translate common English words and phrases to German
+   - Try: "translate hello to german"
+
+🐍 **Fun Commands**: I have some playful commands available
+   - Snake command: 🐍 
+   - Squirrel command: 🐿️
+
+💬 **General Chat**: Feel free to ask me questions or have a conversation
+
+📁 **Code Assistance**: I'm designed to help with coding tasks and complex problems
+
+What would you like to explore?`);
+				}
 				// Check if this is a translation request
-				if (prompt.includes('translate') && prompt.includes('german')) {
+				else if (prompt.includes('translate') && prompt.includes('german')) {
 					// Extract text to translate (simple heuristic)
 					let textToTranslate = request.prompt;
 					

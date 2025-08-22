@@ -80,6 +80,24 @@
         "title": "Translate to German",
         "category": "JoshBot",
         "icon": "$(globe)"
+      },
+      {
+        "command": "joshbot.zenMode",
+        "title": "Zen Mode",
+        "category": "JoshBot",
+        "icon": "$(symbol-event)"
+      },
+      {
+        "command": "joshbot.partyMode",
+        "title": "Party Mode",
+        "category": "JoshBot",
+        "icon": "$(color-mode)"
+      },
+      {
+        "command": "joshbot.rainbowMode",
+        "title": "Rainbow Mode",
+        "category": "JoshBot",
+        "icon": "$(circle-filled)"
       }
     ],
     "configuration": {
@@ -109,6 +127,18 @@
         },
         {
           "command": "joshbot.translateToGerman",
+          "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.zenMode",
+          "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.partyMode",
+          "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.rainbowMode",
           "when": "chatSessionType == josh-bot"
         }
       ]

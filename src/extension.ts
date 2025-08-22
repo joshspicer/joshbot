@@ -13,7 +13,7 @@ async function getSessionContent(id: string, _token: vscode.CancellationToken): 
 // Must match package.json's "contributes.chatSessions.[0].id"
 const CHAT_SESSION_TYPE = 'josh-bot';
 
-export interface IChatPullRequestContent {
+export interface IChatPullRequestContent extends vscode.RemoteCodingAgentResult {
 	uri: vscode.Uri;
 	title: string;
 	description: string;
@@ -154,6 +154,38 @@ export function activate(context: vscode.ExtensionContext) {
 		CHAT_SESSION_TYPE,
 		provider
 	));
+
+	// Register the remote coding agent
+	if (vscode.remoteCodingAgents) {
+		const joshBotAgent: vscode.RemoteCodingAgent = {
+			id: 'josh-bot',
+			name: 'Josh Bot',
+			displayName: 'Josh Bot',
+			description: 'A dedicated coding assistant great at complex tasks',
+			command: 'joshbot.cloudButton'
+		};
+
+		const agentHandler: vscode.RemoteCodingAgentHandler = async (context, token) => {
+			// Invoke the existing cloud button command
+			const result = await vscode.commands.executeCommand('joshbot.cloudButton') as IChatPullRequestContent;
+			
+			// Return as RemoteCodingAgentResult
+			return {
+				uri: result.uri,
+				title: result.title,
+				description: result.description,
+				author: result.author,
+				linkTag: result.linkTag,
+				status: 'completed',
+				metadata: { sessionType: CHAT_SESSION_TYPE }
+			};
+		};
+
+		context.subscriptions.push(vscode.remoteCodingAgents.registerAgent({
+			agent: joshBotAgent,
+			handler: agentHandler
+		}));
+	}
 }
 
 interface JoshBotSession extends vscode.ChatSession {

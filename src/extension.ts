@@ -93,6 +93,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.squirrel', () => {
 		vscode.window.showInformationMessage('Squirrel! 🐿️');
 	}));
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.test2', () => {
+		vscode.window.showInformationMessage('test2');
+	}));
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.translateToGerman', async () => {
 		const input = await vscode.window.showInputBox({
 			placeHolder: 'Enter text to translate to German',

@@ -76,6 +76,11 @@
         "icon": "$(squirrel)"
       },
       {
+        "command": "joshbot.test2",
+        "title": "test2",
+        "category": "JoshBot"
+      },
+      {
         "command": "joshbot.translateToGerman",
         "title": "Translate to German",
         "category": "JoshBot",

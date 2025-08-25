@@ -4,6 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import { ThemeManager } from './colors/themeManager';
+import { ColorUtils } from './colors/colorUtils';
 
 async function getSessionContent(id: string, _token: vscode.CancellationToken): Promise<vscode.ChatSession> {
 	const sessionManager = JoshBotSessionManager.getInstance();
@@ -34,14 +36,63 @@ class JoshBotUriHandler implements vscode.UriHandler {
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 
+	// Initialize theme manager
+	const themeManager = ThemeManager.getInstance();
+
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.hello', () => {
 		vscode.window.showInformationMessage('Hello from JoshBot!');
 	}));
+	
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.snake', () => {
-		vscode.window.showInformationMessage('Snake! 🐍');
+		const config = themeManager.config;
+		if (config.enableColorfulResponses) {
+			const coloredMessage = ColorUtils.getStatusColorMarkdown('success', 'Snake! 🐍');
+			vscode.window.showInformationMessage('Snake! 🐍');
+		} else {
+			vscode.window.showInformationMessage('Snake! 🐍');
+		}
 	}));
+	
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.squirrel', () => {
-		vscode.window.showInformationMessage('Squirrel! 🐿️');
+		const config = themeManager.config;
+		if (config.enableColorfulResponses) {
+			const coloredMessage = ColorUtils.getStatusColorMarkdown('info', 'Squirrel! 🐿️');
+			vscode.window.showInformationMessage('Squirrel! 🐿️');
+		} else {
+			vscode.window.showInformationMessage('Squirrel! 🐿️');
+		}
+	}));
+
+	// New color-themed commands
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.rainbow', () => {
+		const rainbowText = ColorUtils.rainbowText('Rainbow Colors! 🌈');
+		vscode.window.showInformationMessage('Rainbow Colors! 🌈');
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.palette', async () => {
+		const colors = [
+			themeManager.getPrimaryColor(),
+			themeManager.getAccentColor(),
+			ColorUtils.StatusColors.SUCCESS,
+			ColorUtils.StatusColors.WARNING,
+			ColorUtils.StatusColors.ERROR,
+			ColorUtils.StatusColors.INFO
+		];
+		
+		const paletteMarkdown = ColorUtils.createColorPalette(colors);
+		vscode.window.showInformationMessage(`Color Palette:\n${colors.join(', ')}`);
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.colorPicker', async () => {
+		const colorOptions = Object.keys(ThemeManager.PRESET_THEMES);
+		const selected = await vscode.window.showQuickPick(colorOptions, {
+			placeHolder: 'Select a color theme'
+		});
+		
+		if (selected) {
+			await themeManager.applyPresetTheme(selected as keyof typeof ThemeManager.PRESET_THEMES);
+			vscode.window.showInformationMessage(`Applied ${selected} theme! 🎨`);
+		}
 	}));
 
 	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
@@ -126,6 +177,7 @@ class JoshBotSessionManager {
 	}
 
 	private createDemoSession(): void {
+		const themeManager = ThemeManager.getInstance();
 		const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
 		currentResponseParts.push(new vscode.ChatResponseMarkdownPart('hey'));
 		const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
@@ -137,8 +189,33 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
+				const prompt = request.prompt.toLowerCase();
+				
+				// Handle special color commands
+				if (prompt.includes('rainbow')) {
+					const rainbowText = ColorUtils.rainbowText('Here\'s your rainbow! 🌈');
+					stream.markdown(rainbowText);
+				} else if (prompt.includes('color') || prompt.includes('palette')) {
+					const colors = [
+						themeManager.getPrimaryColor(),
+						themeManager.getAccentColor(),
+						ColorUtils.StatusColors.SUCCESS,
+						ColorUtils.StatusColors.WARNING,
+						ColorUtils.StatusColors.ERROR
+					];
+					const paletteDisplay = ColorUtils.createColorPalette(colors);
+					stream.markdown(`**Current Color Palette:**\n${paletteDisplay}`);
+				} else if (prompt.includes('status')) {
+					// Demo status indicators
+					stream.markdown(ColorUtils.getStatusColorMarkdown('success', 'Operation completed successfully!'));
+					stream.markdown(ColorUtils.getStatusColorMarkdown('warning', 'This is a warning message.'));
+					stream.markdown(ColorUtils.getStatusColorMarkdown('error', 'An error occurred.'));
+					stream.markdown(ColorUtils.getStatusColorMarkdown('info', 'Here\'s some information.'));
+				} else {
+					// Enhanced echo with themed styling
+					const themedResponse = themeManager.createThemedMarkdown(`You said: **"${request.prompt}"**`);
+					stream.markdown(themedResponse);
+				}
 
 				const multiDiffPart = new vscode.ChatResponseMultiDiffPart(
 					[
@@ -166,9 +243,16 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
+				// Add typing indicator with colors
+				const typingIndicator = ColorUtils.getStatusColorMarkdown('info', 'JoshBot is thinking...');
+				stream.markdown(typingIndicator);
+				
 				await new Promise(resolve => setTimeout(resolve, 2000));
-				stream.markdown(`You said: "${request.prompt}"`);
+				
+				// Enhanced response with theming
+				const themedResponse = themeManager.createThemedMarkdown(`You said: **"${request.prompt}"**`);
+				stream.markdown(themedResponse);
+				
 				return { metadata: { command: '', sessionId: 'ongoing-session' } };
 			}
 		};
@@ -205,6 +289,7 @@ class JoshBotSessionManager {
 	}
 
 	async createNewSession(input?: string, history?: readonly any[]): Promise<JoshBotSession> {
+		const themeManager = ThemeManager.getInstance();
 		const sessionId = `session-${Date.now()}`;
 		const newSession: JoshBotSession = {
 			id: sessionId,
@@ -216,12 +301,14 @@ class JoshBotSessionManager {
 			requestHandler: async (request, _context, stream, _token) => {
 				// If there's no history, this is a new session.
 				if (!_context.history.length) {
-					stream.markdown(`Welcome to JoshBot! Configuring your session....`);
+					const welcomeMessage = ColorUtils.getStatusColorMarkdown('success', 'Welcome to JoshBot! Configuring your session....');
+					stream.markdown(welcomeMessage);
 					return { metadata: { command: '', sessionId } };
 				}
 
-				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
+				// Enhanced echo with themed styling
+				const themedResponse = themeManager.createThemedMarkdown(`You said: **"${request.prompt}"**`);
+				stream.markdown(themedResponse);
 				return { metadata: { command: '', sessionId } };
 			}
 		};

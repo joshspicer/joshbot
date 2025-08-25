@@ -74,6 +74,24 @@
         "title": "Squirrel!",
         "category": "JoshBot",
         "icon": "$(squirrel)"
+      },
+      {
+        "command": "joshbot.rainbow",
+        "title": "Rainbow Colors",
+        "category": "JoshBot",
+        "icon": "$(symbol-color)"
+      },
+      {
+        "command": "joshbot.palette",
+        "title": "Color Palette",
+        "category": "JoshBot",
+        "icon": "$(paintcan)"
+      },
+      {
+        "command": "joshbot.colorPicker",
+        "title": "Color Picker",
+        "category": "JoshBot",
+        "icon": "$(color-mode)"
       }
     ],
     "configuration": {
@@ -88,6 +106,32 @@
           "type": "boolean",
           "default": true,
           "description": "Enable to contribute a cloud button for Josh Bot."
+        },
+        "joshbot.theme.primaryColor": {
+          "type": "string",
+          "default": "#007ACC",
+          "description": "Primary color for JoshBot theme."
+        },
+        "joshbot.theme.accentColor": {
+          "type": "string",
+          "default": "#FF6B6B",
+          "description": "Accent color for JoshBot theme."
+        },
+        "joshbot.theme.enableColorfulResponses": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable colorful markdown responses in chat."
+        },
+        "joshbot.theme.statusBarColor": {
+          "type": "string",
+          "enum": ["auto", "primary", "accent"],
+          "default": "auto",
+          "description": "Color theme for status bar indicator."
+        },
+        "joshbot.accessibility.highContrast": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable high contrast mode for better accessibility."
         }
       }
     },
@@ -99,6 +143,14 @@
         },
         {
           "command": "joshbot.snake",
+          "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.rainbow",
+          "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.palette",
           "when": "chatSessionType == josh-bot"
         }
       ]

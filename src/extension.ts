@@ -4,6 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import { pickColorCommand, randomColorCommand, colorPaletteCommand, insertColorCommand, processColorChatRequest } from './colorCommands';
+import { registerColorProviders } from './colorProvider';
 
 async function getSessionContent(id: string, _token: vscode.CancellationToken): Promise<vscode.ChatSession> {
 	const sessionManager = JoshBotSessionManager.getInstance();
@@ -44,6 +46,12 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Squirrel! 🐿️');
 	}));
 
+	// Register color commands
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.pickColor', pickColorCommand));
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.randomColor', randomColorCommand));
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.colorPalette', colorPaletteCommand));
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.insertColor', insertColorCommand));
+
 	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
 
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.cloudButton', async (): Promise<IChatPullRequestContent> => {
@@ -65,6 +73,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const sessionManager = JoshBotSessionManager.getInstance();
 	sessionManager.initialize(context);
+
+	// Register color providers
+	registerColorProviders(context);
 
 	const provider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
 		label = vscode.l10n.t('JoshBot');
@@ -137,6 +148,13 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
+				// Check for color-related requests first
+				const colorResponse = processColorChatRequest(request.prompt);
+				if (colorResponse) {
+					stream.markdown(colorResponse);
+					return { metadata: { command: '', sessionId: 'default-session' } };
+				}
+
 				// Simple echo bot for demo purposes
 				stream.markdown(`You said: "${request.prompt}"`);
 
@@ -166,6 +184,14 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
+				// Check for color-related requests first
+				const colorResponse = processColorChatRequest(request.prompt);
+				if (colorResponse) {
+					await new Promise(resolve => setTimeout(resolve, 1000));
+					stream.markdown(colorResponse);
+					return { metadata: { command: '', sessionId: 'ongoing-session' } };
+				}
+
 				// Simple echo bot for demo purposes
 				await new Promise(resolve => setTimeout(resolve, 2000));
 				stream.markdown(`You said: "${request.prompt}"`);
@@ -217,6 +243,13 @@ class JoshBotSessionManager {
 				// If there's no history, this is a new session.
 				if (!_context.history.length) {
 					stream.markdown(`Welcome to JoshBot! Configuring your session....`);
+					return { metadata: { command: '', sessionId } };
+				}
+
+				// Check for color-related requests first
+				const colorResponse = processColorChatRequest(request.prompt);
+				if (colorResponse) {
+					stream.markdown(colorResponse);
 					return { metadata: { command: '', sessionId } };
 				}
 

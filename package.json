@@ -92,6 +92,12 @@
         "title": "Color Picker",
         "category": "JoshBot",
         "icon": "$(color-mode)"
+      },
+      {
+        "command": "joshbot.seasonalTheme",
+        "title": "Apply Seasonal Theme",
+        "category": "JoshBot",
+        "icon": "$(calendar)"
       }
     ],
     "configuration": {
@@ -151,6 +157,10 @@
         },
         {
           "command": "joshbot.palette",
+          "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.seasonalTheme",
           "when": "chatSessionType == josh-bot"
         }
       ]

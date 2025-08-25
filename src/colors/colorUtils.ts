@@ -73,36 +73,36 @@ export class ColorUtils {
     } as const;
 
     /**
-     * Gets an appropriate status color with markdown formatting
+     * Gets an appropriate status color with markdown formatting, with accessibility support
      */
-    static getStatusColorMarkdown(status: 'success' | 'warning' | 'error' | 'info' | 'neutral', text: string): string {
+    static getStatusColorMarkdown(status: 'success' | 'warning' | 'error' | 'info' | 'neutral', text: string, highContrast: boolean = false): string {
         const colors = this.StatusColors;
         let color: string;
         let icon: string;
 
         switch (status) {
             case 'success':
-                color = colors.SUCCESS;
+                color = highContrast ? '#00AA00' : colors.SUCCESS;
                 icon = '✅';
                 break;
             case 'warning':
-                color = colors.WARNING;
+                color = highContrast ? '#FFAA00' : colors.WARNING;
                 icon = '⚠️';
                 break;
             case 'error':
-                color = colors.ERROR;
+                color = highContrast ? '#FF0000' : colors.ERROR;
                 icon = '❌';
                 break;
             case 'info':
-                color = colors.INFO;
+                color = highContrast ? '#0000FF' : colors.INFO;
                 icon = 'ℹ️';
                 break;
             default:
-                color = colors.NEUTRAL;
+                color = highContrast ? '#808080' : colors.NEUTRAL;
                 icon = '💬';
         }
 
-        return `<span style="color: ${color};">${icon} ${text}</span>`;
+        return `<span style="color: ${color}; font-weight: ${highContrast ? 'bold' : 'normal'};">${icon} ${text}</span>`;
     }
 
     /**

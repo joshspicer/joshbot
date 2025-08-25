@@ -15,6 +15,16 @@ async function getSessionContent(id: string, _token: vscode.CancellationToken): 
 // Must match package.json's "contributes.chatSessions.[0].id"
 const CHAT_SESSION_TYPE = 'josh-bot';
 
+function getCurrentSeason(): string {
+	const now = new Date();
+	const month = now.getMonth() + 1; // 1-12
+	
+	if (month >= 3 && month <= 5) return 'Spring';
+	else if (month >= 6 && month <= 8) return 'Summer';
+	else if (month >= 9 && month <= 11) return 'Fall';
+	else return 'Winter';
+}
+
 export interface IChatPullRequestContent {
 	uri: vscode.Uri;
 	title: string;
@@ -38,6 +48,28 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Initialize theme manager
 	const themeManager = ThemeManager.getInstance();
+
+	// Create status bar item
+	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	statusBarItem.text = '$(robot) JoshBot';
+	statusBarItem.tooltip = 'JoshBot - Click to open color picker';
+	statusBarItem.command = 'joshbot.colorPicker';
+	statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.prominentBackground');
+	statusBarItem.show();
+	context.subscriptions.push(statusBarItem);
+
+	// Update status bar color when theme changes
+	const updateStatusBarColor = () => {
+		const color = themeManager.getStatusBarColor();
+		statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.prominentBackground');
+	};
+	
+	// Listen for configuration changes to update status bar
+	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+		if (e.affectsConfiguration('joshbot.theme')) {
+			updateStatusBarColor();
+		}
+	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.hello', () => {
 		vscode.window.showInformationMessage('Hello from JoshBot!');
@@ -93,6 +125,13 @@ export function activate(context: vscode.ExtensionContext) {
 			await themeManager.applyPresetTheme(selected as keyof typeof ThemeManager.PRESET_THEMES);
 			vscode.window.showInformationMessage(`Applied ${selected} theme! 🎨`);
 		}
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.seasonalTheme', async () => {
+		await themeManager.applySeasonalTheme();
+		const seasonalColors = themeManager.getSeasonalColors();
+		const season = getCurrentSeason();
+		vscode.window.showInformationMessage(`Applied ${season} seasonal theme! 🍂❄️🌸☀️`);
 	}));
 
 	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
@@ -191,6 +230,10 @@ class JoshBotSessionManager {
 			requestHandler: async (request, _context, stream, _token) => {
 				const prompt = request.prompt.toLowerCase();
 				
+				// Show typing indicator first
+				const typingIndicator = ColorUtils.getStatusColorMarkdown('info', 'JoshBot is processing your request...', themeManager.config.highContrast);
+				stream.markdown(typingIndicator);
+				
 				// Handle special color commands
 				if (prompt.includes('rainbow')) {
 					const rainbowText = ColorUtils.rainbowText('Here\'s your rainbow! 🌈');
@@ -207,10 +250,17 @@ class JoshBotSessionManager {
 					stream.markdown(`**Current Color Palette:**\n${paletteDisplay}`);
 				} else if (prompt.includes('status')) {
 					// Demo status indicators
-					stream.markdown(ColorUtils.getStatusColorMarkdown('success', 'Operation completed successfully!'));
-					stream.markdown(ColorUtils.getStatusColorMarkdown('warning', 'This is a warning message.'));
-					stream.markdown(ColorUtils.getStatusColorMarkdown('error', 'An error occurred.'));
-					stream.markdown(ColorUtils.getStatusColorMarkdown('info', 'Here\'s some information.'));
+					const highContrast = themeManager.config.highContrast;
+					stream.markdown(ColorUtils.getStatusColorMarkdown('success', 'Operation completed successfully!', highContrast));
+					stream.markdown(ColorUtils.getStatusColorMarkdown('warning', 'This is a warning message.', highContrast));
+					stream.markdown(ColorUtils.getStatusColorMarkdown('error', 'An error occurred.', highContrast));
+					stream.markdown(ColorUtils.getStatusColorMarkdown('info', 'Here\'s some information.', highContrast));
+				} else if (prompt.includes('theme') || prompt.includes('seasonal')) {
+					const season = getCurrentSeason();
+					const seasonalColors = themeManager.getSeasonalColors();
+					stream.markdown(`**Current Season: ${season}**`);
+					stream.markdown(`Primary: ${seasonalColors.primary}, Accent: ${seasonalColors.accent}`);
+					stream.markdown(ColorUtils.getStatusColorMarkdown('info', `Try saying "apply seasonal theme" to use ${season.toLowerCase()} colors!`, themeManager.config.highContrast));
 				} else {
 					// Enhanced echo with themed styling
 					const themedResponse = themeManager.createThemedMarkdown(`You said: **"${request.prompt}"**`);
@@ -244,7 +294,7 @@ class JoshBotSessionManager {
 			],
 			requestHandler: async (request, _context, stream, _token) => {
 				// Add typing indicator with colors
-				const typingIndicator = ColorUtils.getStatusColorMarkdown('info', 'JoshBot is thinking...');
+				const typingIndicator = ColorUtils.getStatusColorMarkdown('info', 'JoshBot is thinking...', themeManager.config.highContrast);
 				stream.markdown(typingIndicator);
 				
 				await new Promise(resolve => setTimeout(resolve, 2000));
@@ -301,7 +351,7 @@ class JoshBotSessionManager {
 			requestHandler: async (request, _context, stream, _token) => {
 				// If there's no history, this is a new session.
 				if (!_context.history.length) {
-					const welcomeMessage = ColorUtils.getStatusColorMarkdown('success', 'Welcome to JoshBot! Configuring your session....');
+					const welcomeMessage = ColorUtils.getStatusColorMarkdown('success', 'Welcome to JoshBot! Configuring your session....', themeManager.config.highContrast);
 					stream.markdown(welcomeMessage);
 					return { metadata: { command: '', sessionId } };
 				}

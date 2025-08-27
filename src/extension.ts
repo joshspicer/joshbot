@@ -33,6 +33,9 @@ class JoshBotUriHandler implements vscode.UriHandler {
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
+	
+	// Show a visible notification that the extension has activated
+	vscode.window.showInformationMessage('🤖 JoshBot is now active! Try the "JoshBot: Hello" command.');
 
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.hello', () => {
 		vscode.window.showInformationMessage('Hello from JoshBot!');
@@ -42,6 +45,23 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.squirrel', () => {
 		vscode.window.showInformationMessage('Squirrel! 🐿️');
+	}));
+
+	// Add a status command to help users verify the extension is working
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.status', () => {
+		const config = vscode.workspace.getConfiguration('joshbot');
+		const chatSessionsEnabled = config.get('contributeChatSessions', true);
+		const cloudButtonEnabled = config.get('contributeCloudButton', true);
+		
+		const statusMessage = `JoshBot Status:
+• Extension: ✅ Active
+• Chat Sessions: ${chatSessionsEnabled ? '✅ Enabled' : '❌ Disabled'}
+• Cloud Button: ${cloudButtonEnabled ? '✅ Enabled' : '❌ Disabled'}
+• Commands: ✅ Available (hello, snake, squirrel, status)
+
+Try running "JoshBot: Hello" from the command palette!`;
+		
+		vscode.window.showInformationMessage(statusMessage, { modal: true });
 	}));
 
 	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
@@ -63,37 +83,44 @@ export function activate(context: vscode.ExtensionContext) {
 		return result;
 	}));
 
-	const sessionManager = JoshBotSessionManager.getInstance();
-	sessionManager.initialize(context);
+	try {
+		const sessionManager = JoshBotSessionManager.getInstance();
+		sessionManager.initialize(context);
 
-	const provider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
-		label = vscode.l10n.t('JoshBot');
-		provideChatSessionItems = async (_token: vscode.CancellationToken) => {
-			return await sessionManager.getSessionItems(_token);
-		};
-		provideChatSessionContent = async (id: string, token: vscode.CancellationToken) => {
-			return await getSessionContent(id, token);
-		};
-		provideNewChatSessionItem = async (options: { prompt?: string; history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>; metadata?: any; }, token: vscode.CancellationToken): Promise<vscode.ChatSessionItem> => {
-			const session = await sessionManager.createNewSession(options.prompt, options.history);
-			return {
-				id: session.id,
-				label: session.name,
+		const provider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
+			label = vscode.l10n.t('JoshBot');
+			provideChatSessionItems = async (_token: vscode.CancellationToken) => {
+				return await sessionManager.getSessionItems(_token);
 			};
+			provideChatSessionContent = async (id: string, token: vscode.CancellationToken) => {
+				return await getSessionContent(id, token);
+			};
+			provideNewChatSessionItem = async (options: { prompt?: string; history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>; metadata?: any; }, token: vscode.CancellationToken): Promise<vscode.ChatSessionItem> => {
+				const session = await sessionManager.createNewSession(options.prompt, options.history);
+				return {
+					id: session.id,
+					label: session.name,
+				};
+			};
+			// Events not used yet, but required by interface.
+			onDidChangeChatSessionItems = new vscode.EventEmitter<void>().event;
 		};
-		// Events not used yet, but required by interface.
-		onDidChangeChatSessionItems = new vscode.EventEmitter<void>().event;
-	};
 
-	context.subscriptions.push(vscode.chat.registerChatSessionItemProvider(
-		CHAT_SESSION_TYPE,
-		provider
-	));
+		context.subscriptions.push(vscode.chat.registerChatSessionItemProvider(
+			CHAT_SESSION_TYPE,
+			provider
+		));
 
-	context.subscriptions.push(vscode.chat.registerChatSessionContentProvider(
-		CHAT_SESSION_TYPE,
-		provider
-	));
+		context.subscriptions.push(vscode.chat.registerChatSessionContentProvider(
+			CHAT_SESSION_TYPE,
+			provider
+		));
+		
+		console.log('JoshBot chat session providers registered successfully!');
+	} catch (error) {
+		console.error('Error initializing JoshBot chat features:', error);
+		vscode.window.showWarningMessage('JoshBot chat features could not be initialized. Some features may not be available.');
+	}
 }
 
 interface JoshBotSession extends vscode.ChatSession {

@@ -25,7 +25,11 @@
   ],
   "activationEvents": [
     "onChatSession:josh-bot",
-    "*"
+    "onCommand:joshbot.hello",
+    "onCommand:joshbot.status",
+    "onCommand:joshbot.snake",
+    "onCommand:joshbot.squirrel",
+    "onCommand:joshbot.cloudButton"
   ],
   "capabilities": {
     "virtualWorkspaces": true,
@@ -74,6 +78,12 @@
         "title": "Squirrel!",
         "category": "JoshBot",
         "icon": "$(squirrel)"
+      },
+      {
+        "command": "joshbot.status",
+        "title": "Status",
+        "category": "JoshBot",
+        "icon": "$(info)"
       }
     ],
     "configuration": {

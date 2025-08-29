@@ -74,6 +74,12 @@
         "title": "Squirrel!",
         "category": "JoshBot",
         "icon": "$(squirrel)"
+      },
+      {
+        "command": "joshbot.puppies",
+        "title": "Puppies!",
+        "category": "JoshBot",
+        "icon": "$(heart)"
       }
     ],
     "configuration": {
@@ -99,6 +105,10 @@
         },
         {
           "command": "joshbot.snake",
+          "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.puppies",
           "when": "chatSessionType == josh-bot"
         }
       ]

@@ -137,7 +137,48 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
+				// Handle test messages with comprehensive information
+				if (request.prompt.toLowerCase().trim() === 'test') {
+					stream.markdown(`# 🤖 JoshBot Test Mode Activated!
+
+Welcome to JoshBot - your dedicated coding assistant! I'm here to help with complex tasks.
+
+## What I can do:
+- **Chat assistance**: Have natural conversations about your coding projects
+- **Code analysis**: Help analyze and understand code structures
+- **File operations**: Work with file diffs and modifications
+- **URI handling**: Process custom URI commands
+- **Session management**: Maintain conversation context across sessions
+
+## Available commands you can try:
+- Ask me about coding problems
+- Request help with specific programming languages
+- Ask for code reviews or suggestions
+- Test different conversation flows
+
+## Special features:
+- Multi-diff support for file comparisons
+- Pull request integration
+- Custom URI scheme handling (\`${vscode.env.uriScheme}://spcr-test.joshbot/\`)
+
+Feel free to ask me anything or try the commands above! 🚀`);
+
+					const multiDiffPart = new vscode.ChatResponseMultiDiffPart(
+						[
+							{
+								originalUri: vscode.Uri.file('/path/to/original/file'),
+								modifiedUri: vscode.Uri.file('/path/to/modified/file'),
+								goToFileUri: vscode.Uri.file('/path/to/file'),
+							}
+						],
+						'Example Diff Capability'
+					);
+					stream.push(multiDiffPart);
+
+					return { metadata: { command: 'test', sessionId: 'default-session' } };
+				}
+
+				// Simple echo bot for other messages
 				stream.markdown(`You said: "${request.prompt}"`);
 
 				const multiDiffPart = new vscode.ChatResponseMultiDiffPart(
@@ -166,7 +207,29 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
+				// Handle test messages with comprehensive information
+				if (request.prompt.toLowerCase().trim() === 'test') {
+					await new Promise(resolve => setTimeout(resolve, 1000));
+					stream.markdown(`# 🧪 JoshBot Ongoing Session Test
+
+This is an ongoing session with enhanced capabilities! 
+
+## Session Features:
+- **Persistent context**: This session remembers our conversation
+- **Delayed responses**: Simulating thoughtful processing
+- **Enhanced interaction**: More dynamic chat experience
+
+## Try these test scenarios:
+1. Ask me about a coding problem
+2. Request a code review
+3. Test different conversation topics
+4. Explore the session's memory capabilities
+
+I'm ready to assist with your development tasks! What would you like to test?`);
+					return { metadata: { command: 'test', sessionId: 'ongoing-session' } };
+				}
+
+				// Simple echo bot for other messages with delay
 				await new Promise(resolve => setTimeout(resolve, 2000));
 				stream.markdown(`You said: "${request.prompt}"`);
 				return { metadata: { command: '', sessionId: 'ongoing-session' } };
@@ -216,13 +279,50 @@ class JoshBotSessionManager {
 			requestHandler: async (request, _context, stream, _token) => {
 				// If there's no history, this is a new session.
 				if (!_context.history.length) {
-					stream.markdown(`Welcome to JoshBot! Configuring your session....`);
-					return { metadata: { command: '', sessionId } };
+					stream.markdown(`# 🌟 Welcome to JoshBot! 
+
+Setting up your personalized coding assistant session...
+
+## Session Configuration Complete!
+Your JoshBot session is now ready. I'm here to help with:
+- Code analysis and reviews
+- Programming assistance across multiple languages
+- File management and diff operations
+- Development workflow optimization
+
+**Tip**: Try typing "test" to see all my capabilities!`);
+					return { metadata: { command: 'welcome', sessionId } };
 				}
 
-				// with changes!
+				// Handle test messages with comprehensive information
+				if (request.prompt.toLowerCase().trim() === 'test') {
+					stream.markdown(`# 🎯 JoshBot Capabilities Test
 
-				// Simple echo bot for demo purposes
+Great! You're testing JoshBot functionality. Here's what I can do:
+
+## Core Features:
+- **Intelligent Conversations**: Natural language processing for coding discussions
+- **Code Understanding**: Analyze, review, and suggest improvements
+- **Multi-language Support**: Help with various programming languages
+- **Session Continuity**: Remember context throughout our conversation
+
+## Interactive Elements:
+- File diff visualizations
+- Command button integrations
+- URI scheme handling
+- Pull request workflows
+
+## Test Commands:
+- Ask coding questions
+- Request code reviews
+- Explore file operations
+- Test conversation memory
+
+Ready to dive deeper? Ask me anything about your development work! 🚀`);
+					return { metadata: { command: 'test', sessionId } };
+				}
+
+				// Simple echo bot for other messages
 				stream.markdown(`You said: "${request.prompt}"`);
 				return { metadata: { command: '', sessionId } };
 			}

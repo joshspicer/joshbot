@@ -43,6 +43,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.squirrel', () => {
 		vscode.window.showInformationMessage('Squirrel! 🐿️');
 	}));
+	context.subscriptions.push(vscode.commands.registerCommand('joshbot.puppies', () => {
+		vscode.window.showInformationMessage('Puppies! 🐶');
+	}));
 
 	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
 

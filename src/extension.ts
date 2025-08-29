@@ -219,6 +219,7 @@ class JoshBotSessionManager {
 					stream.markdown(`Welcome to JoshBot! Configuring your session....`);
 					return { metadata: { command: '', sessionId } };
 				}
+				// TODO:
 
 				// Simple echo bot for demo purposes
 				stream.markdown(`You said: "${request.prompt}"`);

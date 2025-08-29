@@ -137,8 +137,24 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
+				// Detect common test/greeting messages and provide helpful responses
+				const prompt = request.prompt.toLowerCase().trim();
+				const testPatterns = ['test', 'hi', 'hello', 'hey', 'help', 'what can you do'];
+				
+				if (testPatterns.some(pattern => prompt.includes(pattern))) {
+					stream.markdown(`Hello! 👋 Thanks for testing JoshBot!
+
+I'm here to assist with your development needs. I can help with:
+- **Code analysis** and reviews
+- **Problem-solving** and debugging
+- **Technical guidance** and best practices
+- **Code examples** and snippets
+
+Try asking me something like: "How can I optimize this function?" or "What's the best way to handle errors in JavaScript?"`);
+				} else {
+					// Echo back for other messages
+					stream.markdown(`You said: "${request.prompt}"`);
+				}
 
 				const multiDiffPart = new vscode.ChatResponseMultiDiffPart(
 					[
@@ -166,9 +182,28 @@ class JoshBotSessionManager {
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
+				// Simulate processing time
 				await new Promise(resolve => setTimeout(resolve, 2000));
-				stream.markdown(`You said: "${request.prompt}"`);
+				
+				// Detect common test/greeting messages and provide helpful responses
+				const prompt = request.prompt.toLowerCase().trim();
+				const testPatterns = ['test', 'hi', 'hello', 'hey', 'help', 'what can you do'];
+				
+				if (testPatterns.some(pattern => prompt.includes(pattern))) {
+					stream.markdown(`Hi there! 👋 I'm JoshBot, ready to help with your coding tasks!
+
+I specialize in:
+- **Code optimization** and performance tuning
+- **Error debugging** and troubleshooting  
+- **Architecture design** and patterns
+- **Code refactoring** suggestions
+
+What would you like to work on together?`);
+				} else {
+					// Echo back for other messages
+					stream.markdown(`You said: "${request.prompt}"`);
+				}
+				
 				return { metadata: { command: '', sessionId: 'ongoing-session' } };
 			}
 		};
@@ -216,14 +251,39 @@ class JoshBotSessionManager {
 			requestHandler: async (request, _context, stream, _token) => {
 				// If there's no history, this is a new session.
 				if (!_context.history.length) {
-					stream.markdown(`Welcome to JoshBot! Configuring your session....`);
+					stream.markdown(`Welcome to JoshBot! 🤖
+
+I'm a dedicated coding assistant designed to help with complex development tasks. Here's what I can do:
+
+- **Code Analysis**: Help analyze and understand your codebase
+- **Problem Solving**: Assist with debugging and technical challenges  
+- **Code Generation**: Create code snippets and implementations
+- **Best Practices**: Provide guidance on coding standards and patterns
+
+Feel free to ask me about any coding questions or share your development challenges!`);
 					return { metadata: { command: '', sessionId } };
 				}
 
-				// with changes!
+				// Detect common test/greeting messages and provide helpful responses
+				const prompt = request.prompt.toLowerCase().trim();
+				const testPatterns = ['test', 'hi', 'hello', 'hey', 'help', 'what can you do'];
+				
+				if (testPatterns.some(pattern => prompt.includes(pattern))) {
+					stream.markdown(`Hello! 👋 I'm JoshBot, your coding assistant. 
 
-				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
+I can help you with:
+- **Code reviews** and suggestions
+- **Debugging** complex issues
+- **Architecture** and design questions
+- **Best practices** for development
+- **Code generation** and examples
+
+What coding challenge are you working on today?`);
+				} else {
+					// Echo back for other messages
+					stream.markdown(`You said: "${request.prompt}"`);
+				}
+				
 				return { metadata: { command: '', sessionId } };
 			}
 		};

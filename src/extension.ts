@@ -74,8 +74,8 @@ export function activate(context: vscode.ExtensionContext) {
 		provideChatSessionContent = async (id: string, token: vscode.CancellationToken) => {
 			return await getSessionContent(id, token);
 		};
-		provideNewChatSessionItem = async (options: { prompt?: string; history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>; metadata?: any; }, token: vscode.CancellationToken): Promise<vscode.ChatSessionItem> => {
-			const session = await sessionManager.createNewSession(options.prompt, options.history);
+		provideNewChatSessionItem = async (options: { readonly request: vscode.ChatRequest; readonly prompt?: string; readonly history?: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>; metadata?: any; }, token: vscode.CancellationToken): Promise<vscode.ChatSessionItem> => {
+			const session = await sessionManager.createNewSession(options.prompt, options.history || []);
 			return {
 				id: session.id,
 				label: session.name,

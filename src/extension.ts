@@ -74,8 +74,13 @@ export function activate(context: vscode.ExtensionContext) {
 		provideChatSessionContent = async (id: string, token: vscode.CancellationToken) => {
 			return await getSessionContent(id, token);
 		};
-		provideNewChatSessionItem = async (options: { prompt?: string; history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>; metadata?: any; }, token: vscode.CancellationToken): Promise<vscode.ChatSessionItem> => {
-			const session = await sessionManager.createNewSession(options.prompt, options.history);
+		provideNewChatSessionItem = async (options: { 
+			readonly request: vscode.ChatRequest; 
+			readonly prompt?: string; 
+			readonly history?: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>; 
+			metadata?: any; 
+		}, token: vscode.CancellationToken): Promise<vscode.ChatSessionItem> => {
+			const session = await sessionManager.createNewSession(options.prompt, options.history || []);
 			return {
 				id: session.id,
 				label: session.name,
@@ -133,7 +138,7 @@ class JoshBotSessionManager {
 			id: 'default-session',
 			name: 'JoshBot Chat',
 			history: [
-				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
+				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], undefined),
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
@@ -162,7 +167,7 @@ class JoshBotSessionManager {
 			id: 'ongoing-session',
 			name: 'JoshBot Chat ongoing',
 			history: [
-				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
+				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], undefined),
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
@@ -211,7 +216,7 @@ class JoshBotSessionManager {
 			name: `JoshBot Session ${this._sessions.size + 1}`,
 			history: [
 				...(history || []),
-				...(input ? [new vscode.ChatRequestTurn2(`Prompted with: ${input}`, undefined, [], 'joshbot', [], [])] : [])
+				...(input ? [new vscode.ChatRequestTurn2(`Prompted with: ${input}`, undefined, [], 'joshbot', [], undefined)] : [])
 			],
 			requestHandler: async (request, _context, stream, _token) => {
 				// If there's no history, this is a new session.

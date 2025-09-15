@@ -125,16 +125,6 @@ declare module 'vscode' {
 		 * Optional URI to navigate to when clicking on the file.
 		 */
 		goToFileUri?: Uri;
-
-		/**
-		 * Added data (e.g. line numbers) to show in the UI
-		 */
-		added?: number;
-
-		/**
-		 * Removed data (e.g. line numbers) to show in the UI
-		 */
-		removed?: number;
 	}
 
 	/**
@@ -174,10 +164,10 @@ declare module 'vscode' {
 	/**
 	 * A specialized progress part for displaying thinking/reasoning steps.
 	 */
-	export class ChatResponseThinkingProgressPart {
-		value: string | string[];
+	export class ChatResponseThinkingProgressPart extends ChatResponseProgressPart {
+		value: string;
 		id?: string;
-		metadata?: { readonly [key: string]: any };
+		metadata?: string;
 		task?: (progress: Progress<LanguageModelThinkingPart>) => Thenable<string | void>;
 
 		/**
@@ -185,7 +175,7 @@ declare module 'vscode' {
 		 * @param value An initial progress message
 		 * @param task A task that will emit thinking parts during its execution
 		 */
-		constructor(value: string | string[], id?: string, metadata?: { readonly [key: string]: any }, task?: (progress: Progress<LanguageModelThinkingPart>) => Thenable<string | void>);
+		constructor(value: string, id?: string, metadata?: string, task?: (progress: Progress<LanguageModelThinkingPart>) => Thenable<string | void>);
 	}
 
 	export class ChatResponseReferencePart2 {
@@ -338,18 +328,18 @@ declare module 'vscode' {
 	}
 
 	export type ThinkingDelta = {
-		text?: string | string[];
+		text?: string;
 		id: string;
-		metadata?: { readonly [key: string]: any };
+		metadata?: string;
 	} | {
-		text?: string | string[];
+		text?: string;
 		id?: string;
-		metadata: { readonly [key: string]: any };
+		metadata: string;
 	} |
 	{
-		text: string | string[];
+		text: string;
 		id?: string;
-		metadata?: { readonly [key: string]: any };
+		metadata?: string;
 	};
 
 	export enum ChatResponseClearToPreviousToolInvocationReason {
@@ -600,11 +590,6 @@ declare module 'vscode' {
 		 * TODO Needed for now to drive the variableName-type reference, but probably both of these should go away in the future.
 		 */
 		readonly name: string;
-
-		/**
-		 * The list of tools were referenced in the value of the reference
-		 */
-		readonly toolReferences?: readonly ChatLanguageModelToolReference[];
 	}
 
 	export interface ChatResultFeedback {
@@ -647,6 +632,5 @@ declare module 'vscode' {
 
 	export interface ChatRequest {
 		modeInstructions?: string;
-		modeInstructionsToolReferences?: readonly ChatLanguageModelToolReference[];
 	}
 }

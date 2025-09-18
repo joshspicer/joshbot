@@ -1,0 +1,17 @@
+{
+  "joshbot.displayName": "Josh Bot",
+  "joshbot.description": "Ein dedizierter Coding-Assistent, der bei komplexen Aufgaben ausgezeichnet ist",
+  "joshbot.category": "JoshBot",
+  "joshbot.command.hello.title": "Hallo",
+  "joshbot.command.cloudButton.title": "Cloud-Schaltfläche",
+  "joshbot.command.snake.title": "Schlange!",
+  "joshbot.command.squirrel.title": "Eichhörnchen!",
+  "joshbot.configuration.title": "JoshBot",
+  "joshbot.configuration.contributeChatSessions.description": "Aktivieren, um Chat-Sitzungen und einen dynamischen Chat-Teilnehmer beizutragen.",
+  "joshbot.configuration.contributeCloudButton.description": "Aktivieren, um eine Cloud-Schaltfläche für Josh Bot beizutragen.",
+  "joshbot.remoteCodingAgent.name": "Josh Bot",
+  "joshbot.remoteCodingAgent.displayName": "Josh Bot",
+  "joshbot.chatSession.name": "joshbot",
+  "joshbot.chatSession.displayName": "Josh Bot",
+  "joshbot.chatSession.description": "Ein dedizierter Coding-Assistent, der bei komplexen Aufgaben ausgezeichnet ist"
+}

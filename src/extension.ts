@@ -27,21 +27,21 @@ class JoshBotUriHandler implements vscode.UriHandler {
 		const command = uri.path;
 
 		// Just show an information message box
-		vscode.window.showInformationMessage(`JoshBot URI command received: ${command}`);
+		vscode.window.showInformationMessage(vscode.l10n.t('uriHandler.commandReceived', command));
 	}
 }
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('JoshBot extension is now active!');
+	console.log(vscode.l10n.t('extension.activated'));
 
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.hello', () => {
-		vscode.window.showInformationMessage('Hello from JoshBot!');
+		vscode.window.showInformationMessage(vscode.l10n.t('command.hello.message'));
 	}));
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.snake', () => {
-		vscode.window.showInformationMessage('Snake! 🐍');
+		vscode.window.showInformationMessage(vscode.l10n.t('command.snake.message'));
 	}));
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.squirrel', () => {
-		vscode.window.showInformationMessage('Squirrel! 🐿️');
+		vscode.window.showInformationMessage(vscode.l10n.t('command.squirrel.message'));
 	}));
 
 	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
@@ -49,9 +49,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('joshbot.cloudButton', async (): Promise<IChatPullRequestContent> => {
 		const result = {
 			uri: vscode.Uri.parse(`${vscode.env.uriScheme}://spcr-test.joshbot/test`),
-			title: 'Pull request by JoshBot',
-			description: 'This is the description of the pull request created by JoshBot.',
-			author: 'Author Name',
+			title: vscode.l10n.t('pullRequest.title'),
+			description: vscode.l10n.t('pullRequest.description'),
+			author: vscode.l10n.t('pullRequest.author'),
 			linkTag: 'PR-123'
 		};
 
@@ -74,8 +74,8 @@ export function activate(context: vscode.ExtensionContext) {
 		provideChatSessionContent = async (id: string, token: vscode.CancellationToken) => {
 			return await getSessionContent(id, token);
 		};
-		provideNewChatSessionItem = async (options: { prompt?: string; history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>; metadata?: any; }, token: vscode.CancellationToken): Promise<vscode.ChatSessionItem> => {
-			const session = await sessionManager.createNewSession(options.prompt, options.history);
+		provideNewChatSessionItem = async (options: { readonly request: vscode.ChatRequest; readonly prompt?: string | undefined; readonly history?: readonly (vscode.ChatRequestTurn | vscode.ChatResponseTurn)[] | undefined; metadata?: any; }, token: vscode.CancellationToken): Promise<vscode.ChatSessionItem> => {
+			const session = await sessionManager.createNewSession(options.prompt, options.history || []);
 			return {
 				id: session.id,
 				label: session.name,
@@ -131,14 +131,14 @@ class JoshBotSessionManager {
 		const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
 		const defaultSession: JoshBotSession = {
 			id: 'default-session',
-			name: 'JoshBot Chat',
+			name: vscode.l10n.t('session.defaultName'),
 			history: [
 				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
 				response2 as vscode.ChatResponseTurn
 			],
 			requestHandler: async (request, _context, stream, _token) => {
 				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
+				stream.markdown(vscode.l10n.t('session.echoResponse', request.prompt));
 
 				const multiDiffPart = new vscode.ChatResponseMultiDiffPart(
 					[
@@ -148,7 +148,7 @@ class JoshBotSessionManager {
 							goToFileUri: vscode.Uri.file('/path/to/file'),
 						}
 					],
-					'Diff'
+					vscode.l10n.t('multiDiff.title')
 				);
 				stream.push(multiDiffPart);
 
@@ -160,7 +160,7 @@ class JoshBotSessionManager {
 
 		const ongoingSession: JoshBotSession = {
 			id: 'ongoing-session',
-			name: 'JoshBot Chat ongoing',
+			name: vscode.l10n.t('session.ongoingName'),
 			history: [
 				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
 				response2 as vscode.ChatResponseTurn
@@ -168,7 +168,7 @@ class JoshBotSessionManager {
 			requestHandler: async (request, _context, stream, _token) => {
 				// Simple echo bot for demo purposes
 				await new Promise(resolve => setTimeout(resolve, 2000));
-				stream.markdown(`You said: "${request.prompt}"`);
+				stream.markdown(vscode.l10n.t('session.echoResponse', request.prompt));
 				return { metadata: { command: '', sessionId: 'ongoing-session' } };
 			}
 		};
@@ -178,7 +178,7 @@ class JoshBotSessionManager {
 	async getSessionContent(id: string, _token: vscode.CancellationToken): Promise<vscode.ChatSession> {
 		const session = this._sessions.get(id);
 		if (!session) {
-			throw new Error(`Session with id ${id} not found`);
+			throw new Error(vscode.l10n.t('error.sessionNotFound', id));
 		}
 
 		if (session.id === 'ongoing-session') {
@@ -188,11 +188,11 @@ class JoshBotSessionManager {
 				activeResponseCallback: async (stream) => {
 					// loop 1 to 5
 					for (let i = 0; i < 5; i++) {
-						stream.markdown(`\nthinking step ${i + 1}... \n`);
+						stream.markdown(vscode.l10n.t('session.thinkingStep', i + 1));
 						await new Promise(resolve => setTimeout(resolve, 1000));
 					}
 
-					stream.markdown(`Done`);
+					stream.markdown(vscode.l10n.t('session.done'));
 				}
 			};
 		} else {
@@ -208,20 +208,20 @@ class JoshBotSessionManager {
 		const sessionId = `session-${Date.now()}`;
 		const newSession: JoshBotSession = {
 			id: sessionId,
-			name: `JoshBot Session ${this._sessions.size + 1}`,
+			name: vscode.l10n.t('session.newSessionName', this._sessions.size + 1),
 			history: [
 				...(history || []),
-				...(input ? [new vscode.ChatRequestTurn2(`Prompted with: ${input}`, undefined, [], 'joshbot', [], [])] : [])
+				...(input ? [new vscode.ChatRequestTurn2(vscode.l10n.t('session.promptedWith', input), undefined, [], 'joshbot', [], [])] : [])
 			],
 			requestHandler: async (request, _context, stream, _token) => {
 				// If there's no history, this is a new session.
 				if (!_context.history.length) {
-					stream.markdown(`Welcome to JoshBot! Configuring your session....`);
+					stream.markdown(vscode.l10n.t('session.welcomeMessage'));
 					return { metadata: { command: '', sessionId } };
 				}
 
 				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
+				stream.markdown(vscode.l10n.t('session.echoResponse', request.prompt));
 				return { metadata: { command: '', sessionId } };
 			}
 		};

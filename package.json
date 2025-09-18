@@ -1,7 +1,7 @@
 {
   "name": "joshbot",
-  "displayName": "Josh Bot",
-  "description": "A dedicated coding assistant great at complex tasks",
+  "displayName": "%joshbot.displayName%",
+  "description": "%joshbot.description%",
   "version": "1.3.0",
   "publisher": "spcr-test",
   "license": "MIT",
@@ -37,8 +37,8 @@
     "remoteCodingAgents": [
       {
         "id": "josh-bot",
-        "name": "Josh Bot",
-        "displayName": "Josh Bot",
+        "name": "%joshbot.remoteCodingAgent.name%",
+        "displayName": "%joshbot.remoteCodingAgent.displayName%",
         "command": "joshbot.cloudButton",
         "when": "config.joshbot.contributeCloudButton"
       }
@@ -46,48 +46,48 @@
     "chatSessions": [
       {
         "type": "josh-bot",
-        "name": "joshbot",
-        "displayName": "Josh Bot",
-        "description": "A dedicated coding assistant great at complex tasks",
+        "name": "%joshbot.chatSession.name%",
+        "displayName": "%joshbot.chatSession.displayName%",
+        "description": "%joshbot.chatSession.description%",
         "when": "config.joshbot.contributeChatSessions"
       }
     ],
     "commands": [
       {
         "command": "joshbot.hello",
-        "title": "Hello",
-        "category": "JoshBot"
+        "title": "%joshbot.command.hello.title%",
+        "category": "%joshbot.category%"
       },
       {
         "command": "joshbot.cloudButton",
-        "title": "Cloud Button",
-        "category": "JoshBot"
+        "title": "%joshbot.command.cloudButton.title%",
+        "category": "%joshbot.category%"
       },
       {
         "command": "joshbot.snake",
-        "title": "Snake!",
-        "category": "JoshBot",
+        "title": "%joshbot.command.snake.title%",
+        "category": "%joshbot.category%",
         "icon": "$(snake)"
       },
       {
         "command": "joshbot.squirrel",
-        "title": "Squirrel!",
-        "category": "JoshBot",
+        "title": "%joshbot.command.squirrel.title%",
+        "category": "%joshbot.category%",
         "icon": "$(squirrel)"
       }
     ],
     "configuration": {
-      "title": "JoshBot",
+      "title": "%joshbot.configuration.title%",
       "properties": {
         "joshbot.contributeChatSessions": {
           "type": "boolean",
           "default": true,
-          "description": "Enable to contribute chat sessions and a dynamic chat participant."
+          "description": "%joshbot.configuration.contributeChatSessions.description%"
         },
         "joshbot.contributeCloudButton": {
           "type": "boolean",
           "default": true,
-          "description": "Enable to contribute a cloud button for Josh Bot."
+          "description": "%joshbot.configuration.contributeCloudButton.description%"
         }
       }
     },
@@ -117,13 +117,15 @@
     "downloadapi": "npx vscode-dts dev"
   },
   "devDependencies": {
-    "@types/vscode": "^1.102.0",
     "@types/node": "16.x",
+    "@types/vscode": "^1.102.0",
+    "@typescript-eslint/eslint-plugin": "^8.44.0",
+    "@typescript-eslint/parser": "^8.44.0",
+    "@vscode/dts": "^0.4.1",
     "@vscode/vsce": "^3.6.0",
-    "typescript": "^5.8.0",
-    "@vscode/dts": "^0.4.1"
+    "eslint": "^9.35.0",
+    "typescript": "^5.8.0"
   },
-  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/joshspicer/joshbot.git"

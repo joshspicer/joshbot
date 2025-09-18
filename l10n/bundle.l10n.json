@@ -1,0 +1,20 @@
+{
+  "extension.activated": "JoshBot extension is now active!",
+  "command.hello.message": "Hello from JoshBot!",
+  "command.snake.message": "Snake! 🐍",
+  "command.squirrel.message": "Squirrel! 🐿️",
+  "uriHandler.commandReceived": "JoshBot URI command received: {0}",
+  "pullRequest.title": "Pull request by JoshBot",
+  "pullRequest.description": "This is the description of the pull request created by JoshBot.",
+  "pullRequest.author": "Author Name",
+  "session.defaultName": "JoshBot Chat",
+  "session.ongoingName": "JoshBot Chat ongoing",
+  "session.newSessionName": "JoshBot Session {0}",
+  "session.echoResponse": "You said: \"{0}\"",
+  "session.welcomeMessage": "Welcome to JoshBot! Configuring your session....",
+  "session.promptedWith": "Prompted with: {0}",
+  "session.thinkingStep": "\nthinking step {0}... \n",
+  "session.done": "Done",
+  "error.sessionNotFound": "Session with id {0} not found",
+  "multiDiff.title": "Diff"
+}

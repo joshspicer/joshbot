@@ -5,239 +5,163 @@
 
 import * as vscode from 'vscode';
 
-async function getSessionContent(id: string, _token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-	const sessionManager = JoshBotSessionManager.getInstance();
-	return await sessionManager.getSessionContent(id, _token);
-}
-
-// Must match package.json's "contributes.chatSessions.[0].id"
 const CHAT_SESSION_TYPE = 'josh-bot';
 
-export interface IChatPullRequestContent {
-	uri: vscode.Uri;
-	title: string;
-	description: string;
-	author: string;
-	linkTag: string;
-}
-
-class JoshBotUriHandler implements vscode.UriHandler {
-	handleUri(uri: vscode.Uri): vscode.ProviderResult<void> {
-		const query = new URLSearchParams(uri.query);
-		const command = uri.path;
-
-		// Just show an information message box
-		vscode.window.showInformationMessage(`JoshBot URI command received: ${command}`);
-	}
-}
+// Dynamically created sessions
+const _sessionItems: vscode.ChatSessionItem[] = [];
+const _chatSessions: Map<string, vscode.ChatSession> = new Map();
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 
-	context.subscriptions.push(vscode.commands.registerCommand('joshbot.hello', () => {
-		vscode.window.showInformationMessage('Hello from JoshBot!');
-	}));
-	context.subscriptions.push(vscode.commands.registerCommand('joshbot.snake', () => {
-		vscode.window.showInformationMessage('Snake! 🐍');
-	}));
-	context.subscriptions.push(vscode.commands.registerCommand('joshbot.squirrel', () => {
-		vscode.window.showInformationMessage('Squirrel! 🐿️');
-	}));
-
-	context.subscriptions.push(vscode.window.registerUriHandler(new JoshBotUriHandler()));
-
-	context.subscriptions.push(vscode.commands.registerCommand('joshbot.cloudButton', async (): Promise<IChatPullRequestContent> => {
-		const result = {
-			uri: vscode.Uri.parse(`${vscode.env.uriScheme}://spcr-test.joshbot/test`),
-			title: 'Pull request by JoshBot',
-			description: 'This is the description of the pull request created by JoshBot.',
-			author: 'Author Name',
-			linkTag: 'PR-123'
-		};
-
-		// Show the chat session after creating the pull request content
-		await vscode.window.showChatSession(CHAT_SESSION_TYPE, 'default-session', {
-			viewColumn: vscode.ViewColumn.One
-		});
-
-		return result;
-	}));
-
-	const sessionManager = JoshBotSessionManager.getInstance();
-	sessionManager.initialize(context);
-
-	const provider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
-		label = vscode.l10n.t('JoshBot');
-		provideChatSessionItems = async (_token: vscode.CancellationToken) => {
-			return await sessionManager.getSessionItems(_token);
-		};
-		provideChatSessionContent = async (id: string, token: vscode.CancellationToken) => {
-			return await getSessionContent(id, token);
-		};
-		provideNewChatSessionItem = async (options: { prompt?: string; history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>; metadata?: any; }, token: vscode.CancellationToken): Promise<vscode.ChatSessionItem> => {
-			const session = await sessionManager.createNewSession(options.prompt, options.history);
-			return {
-				id: session.id,
-				label: session.name,
-			};
-		};
-		// Events not used yet, but required by interface.
-		onDidChangeChatSessionItems = new vscode.EventEmitter<void>().event;
-	};
-
-	context.subscriptions.push(vscode.chat.registerChatSessionItemProvider(
-		CHAT_SESSION_TYPE,
-		provider
-	));
-
-	context.subscriptions.push(vscode.chat.registerChatSessionContentProvider(
-		CHAT_SESSION_TYPE,
-		provider
-	));
-}
-
-interface JoshBotSession extends vscode.ChatSession {
-	id: string;
-	name: string;
-	iconPath?: vscode.Uri | { light: vscode.Uri; dark: vscode.Uri };
-	history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>;
-	requestHandler: vscode.ChatRequestHandler;
-	activeResponseCallback?: (stream: vscode.ChatResponseStream, token: vscode.CancellationToken) => Thenable<void>;
-}
-
-class JoshBotSessionManager {
-	private static instance: JoshBotSessionManager;
-	private _sessions: Map<string, JoshBotSession>;
-
-	private constructor() {
-		this._sessions = new Map<string, JoshBotSession>();
-	}
-
-	static getInstance(): JoshBotSessionManager {
-		if (!JoshBotSessionManager.instance) {
-			JoshBotSessionManager.instance = new JoshBotSessionManager();
-		}
-		return JoshBotSessionManager.instance;
-	}
-
-	initialize(_context: vscode.ExtensionContext): void {
-		// Create a default session
-		this.createDemoSession();
-	}
-
-	private createDemoSession(): void {
-		const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
-		currentResponseParts.push(new vscode.ChatResponseMarkdownPart('hey'));
-		const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
-		const defaultSession: JoshBotSession = {
-			id: 'default-session',
-			name: 'JoshBot Chat',
-			history: [
-				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
-				response2 as vscode.ChatResponseTurn
-			],
-			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
-
-				const multiDiffPart = new vscode.ChatResponseMultiDiffPart(
-					[
-						{
-							originalUri: vscode.Uri.file('/path/to/original/file'),
-							modifiedUri: vscode.Uri.file('/path/to/modified/file'),
-							goToFileUri: vscode.Uri.file('/path/to/file'),
-						}
-					],
-					'Diff'
-				);
-				stream.push(multiDiffPart);
-
-				return { metadata: { command: '', sessionId: 'default-session' } };
+	const onDidCreateChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
+	// Create a simple chat participant
+	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, context, stream, token) => {
+		if (context.chatSessionContext) {
+			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
+			stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
+			if (isUntitled) {
+				/* Exchange this untitled session for a 'real' session */
+				const newSessionId = `session-${Date.now()}`;
+				const newSessionItem: vscode.ChatSessionItem = {
+					id: newSessionId,
+					label: `JoshBot Session ${new Date().toLocaleString()}`,
+					status: vscode.ChatSessionStatus.InProgress
+				};
+				_sessionItems.push(newSessionItem);
+				_chatSessions.set(newSessionId, {
+					requestHandler: undefined,
+					history: [
+						new vscode.ChatRequestTurn2(request.prompt, undefined, [], 'joshbot', [], []),
+						new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${newSessionId}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
+					]
+				});
+				/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
+				onDidCreateChatSessionItemEmitter.fire({ original , modified: newSessionItem });
+			} else {
+				/* follow up */
+				stream.markdown(`Welcome back! You are ${original.id} (${original.label})`)
 			}
-		};
-
-		this._sessions.set(defaultSession.id, defaultSession);
-
-		const ongoingSession: JoshBotSession = {
-			id: 'ongoing-session',
-			name: 'JoshBot Chat ongoing',
-			history: [
-				new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
-				response2 as vscode.ChatResponseTurn
-			],
-			requestHandler: async (request, _context, stream, _token) => {
-				// Simple echo bot for demo purposes
-				await new Promise(resolve => setTimeout(resolve, 2000));
-				stream.markdown(`You said: "${request.prompt}"`);
-				return { metadata: { command: '', sessionId: 'ongoing-session' } };
-			}
-		};
-		this._sessions.set(ongoingSession.id, ongoingSession);
-	}
-
-	async getSessionContent(id: string, _token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-		const session = this._sessions.get(id);
-		if (!session) {
-			throw new Error(`Session with id ${id} not found`);
-		}
-
-		if (session.id === 'ongoing-session') {
-			return {
-				history: session.history,
-				requestHandler: session.requestHandler,
-				activeResponseCallback: async (stream) => {
-					// loop 1 to 5
-					for (let i = 0; i < 5; i++) {
-						stream.markdown(`\nthinking step ${i + 1}... \n`);
-						await new Promise(resolve => setTimeout(resolve, 1000));
-					}
-
-					stream.markdown(`Done`);
-				}
-			};
 		} else {
-			return {
-				history: session.history,
-				requestHandler: session.requestHandler,
-				activeResponseCallback: undefined
-			};
+			/*general query*/
+			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
 		}
-	}
+	});
+	context.subscriptions.push(chatParticipant);
 
-	async createNewSession(input?: string, history?: readonly any[]): Promise<JoshBotSession> {
-		const sessionId = `session-${Date.now()}`;
-		const newSession: JoshBotSession = {
-			id: sessionId,
-			name: `JoshBot Session ${this._sessions.size + 1}`,
-			history: [
-				...(history || []),
-				...(input ? [new vscode.ChatRequestTurn2(`Prompted with: ${input}`, undefined, [], 'joshbot', [], [])] : [])
-			],
-			requestHandler: async (request, _context, stream, _token) => {
-				// If there's no history, this is a new session.
-				if (!_context.history.length) {
-					stream.markdown(`Welcome to JoshBot! Configuring your session....`);
-					return { metadata: { command: '', sessionId } };
-				}
-
-				// Simple echo bot for demo purposes
-				stream.markdown(`You said: "${request.prompt}"`);
-				return { metadata: { command: '', sessionId } };
+	// Create session provider
+	const sessionProvider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
+		onDidChangeChatSessionItems = new vscode.EventEmitter<void>().event;
+		onDidCreateChatSessionItem: vscode.Event<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }> = onDidCreateChatSessionItemEmitter.event;
+		async provideChatSessionItems(token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
+			return [
+				{
+					id: 'demo-session-01',
+					label: 'JoshBot Demo Session 01',
+					status: vscode.ChatSessionStatus.Completed
+				},
+				{
+					id: 'demo-session-02',
+					label: 'JoshBot Demo Session 02',
+					status: vscode.ChatSessionStatus.Completed
+				},
+				{
+					id: 'demo-session-03',
+					label: 'JoshBot Demo Session 03',
+					status: vscode.ChatSessionStatus.InProgress
+				},
+				..._sessionItems,
+			];
+		}
+		async provideChatSessionContent(sessionId: string, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
+			switch (sessionId) {
+				case 'demo-session-01':
+				case 'demo-session-02':
+					return completedChatSessionContent(sessionId);
+				case 'demo-session-03':
+					return inProgressChatSessionContent(sessionId);
+				default:
+					const existing = _chatSessions.get(sessionId);
+					if (existing) {
+						return existing;
+					}
+					// Guess this is an untitled session. Play along.
+					return untitledChatSessionContent(sessionId);
 			}
-		};
-		this._sessions.set(sessionId, newSession);
-		return newSession;
-	}
+		}
 
-	async getSessionItems(_token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
-		return Array.from(this._sessions.values()).map(session => ({
-			id: session.id,
-			label: session.name,
-			iconPath: session.iconPath
-		}));
-	}
+		// provideNewChatSessionItem(options: { readonly request: vscode.ChatRequest; metadata?: any; }, token: vscode.CancellationToken): vscode.ProviderResult<vscode.ChatSessionItem> {
+		// 	throw new Error('Method not implemented.');
+		// }
+	};
+	context.subscriptions.push(
+		vscode.chat.registerChatSessionItemProvider(CHAT_SESSION_TYPE, sessionProvider)
+	);
+	context.subscriptions.push(
+		vscode.chat.registerChatSessionContentProvider(CHAT_SESSION_TYPE, sessionProvider, chatParticipant)
+	);
 }
+
+function completedChatSessionContent(sessionId: string): vscode.ChatSession {
+	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
+	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
+	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
+	return {
+		history: [
+			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
+			response2 as vscode.ChatResponseTurn
+		],
+		requestHandler: undefined,
+		// requestHandler: async (request, context, stream, token) => {
+		// 	stream.markdown(`\n\nHello from ${sessionId}`);
+		// 	return {};
+		// }
+	};
+}
+
+function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
+	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
+	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
+	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
+	return {
+		history: [
+			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
+			response2 as vscode.ChatResponseTurn
+		],
+		activeResponseCallback: async (stream, token) => {
+			stream.progress(`\n\Still working\n`);
+			await new Promise(resolve => setTimeout(resolve, 3000));
+			stream.markdown(`2+2=...\n`);
+			await new Promise(resolve => setTimeout(resolve, 3000));
+			stream.markdown(`4!\n`);
+		},
+		requestHandler: undefined,
+		// requestHandler: async (request, context, stream, token) => {
+		// 	stream.markdown(`Hello from ${sessionId}`);
+		// 	return {};
+		// }
+	};
+}
+
+function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
+	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
+	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n\n`));
+	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`This is an untitled session. Send a message to begin our session.\n`));
+	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
+	return {
+		history: [
+			new vscode.ChatRequestTurn2('Howdy', undefined, [], 'joshbot', [], []),
+			response2 as vscode.ChatResponseTurn
+		],
+		requestHandler: undefined,
+		// requestHandler: async (request, context, stream, token) => {
+		// 	stream.markdown(`\n\nHello from ${sessionId}`);
+		// 	return {};
+		// }
+	};
+}
+
 
 export function deactivate() {
-	// This method is called when the extension is deactivated
+	// Cleanup when extension is deactivated
 }

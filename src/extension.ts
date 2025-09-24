@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
 				onDidCreateChatSessionItemEmitter.fire({ original , modified: newSessionItem });
 			} else {
 				/* follow up */
-				stream.markdown(`Welcome back! You are ${original.id} (${original.label})`)
+				stream.markdown(`Welcome back!`)
 			}
 		} else {
 			/*general query*/

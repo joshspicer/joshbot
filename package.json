@@ -113,8 +113,8 @@
     "test": "node ./out/test/runTest.js",
     "package": "vsce package",
     "deploy": "vsce publish",
-    "postinstall": "npm run downloadapi",
-    "downloadapi": "npx vscode-dts dev"
+    "disabled_postinstall": "npm run downloadapi",
+    "disabled_downloadapi": "npx vscode-dts dev"
   },
   "devDependencies": {
     "@types/vscode": "^1.102.0",

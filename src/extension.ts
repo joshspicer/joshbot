@@ -11,34 +11,23 @@ const CHAT_SESSION_TYPE = 'josh-bot';
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
 
+let onDidCreateChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
-
-	const onDidCreateChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
-	// Create a simple chat participant
+	onDidCreateChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, context, stream, token) => {
 		if (context.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
-			stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
+			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
+			if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
+				return handleConfirmationData(request, context, stream, token);
+			}
 			if (isUntitled) {
-				const count = _sessionItems.length + 1;
-				/* Exchange this untitled session for a 'real' session */
-				const newSessionId = `session-${count}`;
-				const newSessionItem: vscode.ChatSessionItem = {
-					id: newSessionId,
-					label: `JoshBot Session ${count}`,
-					status: vscode.ChatSessionStatus.Completed
-				};
-				_sessionItems.push(newSessionItem);
-				_chatSessions.set(newSessionId, {
-					requestHandler: undefined,
-					history: [
-						new vscode.ChatRequestTurn2(request.prompt, undefined, [], 'joshbot', [], []),
-						new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
-					]
-				});
-				/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
-				onDidCreateChatSessionItemEmitter.fire({ original , modified: newSessionItem });
+				/* Initial Untitled response */
+				stream.confirmation('Untitled', `This is an untitled session. Get it?.\n\n`, {step: 'create'}, ['yes', 'no']);
+				return;
+				
 			} else {
 				/* follow up */
 				stream.markdown(`Welcome back!`)
@@ -103,6 +92,58 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 }
 
+async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
+	const results: Array<{ step: string; accepted: boolean }> = [];
+	results.push(...(request.acceptedConfirmationData?.map(data => ({ step: data.step, accepted: true })) ?? []));
+	results.push(...((request.rejectedConfirmationData ?? []).filter(data => !results.some(r => r.step === data.step)).map(data => ({ step: data.step, accepted: false }))));
+	for (const data of results) {
+		switch (data.step) {
+			case 'create':
+				await handleCreation(data.accepted, request, context, stream);
+				break;
+			default:
+				stream.markdown(`Unknown confirmation step: ${data.step}\n\n`);
+				break;
+		}
+	}
+}
+
+async function handleCreation(accepted: boolean, request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream): Promise<void> {
+	if (!accepted) {
+		stream.warning(`New session was not created.\n\n`);
+		return;
+	}
+
+	const original = context.chatSessionContext?.chatSessionItem;
+	if (!original || !context.chatSessionContext?.isUntitled) {
+		stream.warning(`Cannot create new session - this is not an untitled session!.\n\n`);
+		return;
+	}
+
+	stream.progress(`Creating new session...\n\n`);
+	await new Promise(resolve => setTimeout(resolve, 3000));
+
+	/* Exchange this untitled session for a 'real' session */
+	const count = _sessionItems.length + 1;
+	const newSessionId = `session-${count}`;
+	const newSessionItem: vscode.ChatSessionItem = {
+		id: newSessionId,
+		label: `JoshBot Session ${count}`,
+		status: vscode.ChatSessionStatus.Completed
+	};
+	_sessionItems.push(newSessionItem);
+	_chatSessions.set(newSessionId, {
+		requestHandler: undefined,
+		history: [
+			new vscode.ChatRequestTurn2('Create a new session', undefined, [], 'joshbot', [], []),
+			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
+		]
+	});
+	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
+	onDidCreateChatSessionItemEmitter.fire({ original, modified: newSessionItem });
+}
+
+
 function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
@@ -161,7 +202,6 @@ function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 		// }
 	};
 }
-
 
 export function deactivate() {
 	// Cleanup when extension is deactivated

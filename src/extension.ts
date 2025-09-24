@@ -11,11 +11,11 @@ const CHAT_SESSION_TYPE = 'josh-bot';
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
 
-let onDidCreateChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
+let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
-	onDidCreateChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
+	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, context, stream, token) => {
 		if (context.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
@@ -25,9 +25,9 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 			if (isUntitled) {
 				/* Initial Untitled response */
-				stream.confirmation('New Chat Session', `Would you like to begin?.\n\n`, {step: 'create'}, ['yes', 'no']);
+				stream.confirmation('New Chat Session', `Would you like to begin?\n\n`, { step: 'create' }, ['yes', 'no']);
 				return;
-				
+
 			} else {
 				/* follow up */
 				stream.markdown(`Welcome back!`)
@@ -42,7 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// Create session provider
 	const sessionProvider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
 		onDidChangeChatSessionItems = new vscode.EventEmitter<void>().event;
-		onDidCreateChatSessionItem: vscode.Event<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }> = onDidCreateChatSessionItemEmitter.event;
+		onDidCommitChatSessionItem: vscode.Event<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }> = onDidCommitChatSessionItemEmitter.event;
 		async provideChatSessionItems(token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
 			return [
 				{
@@ -140,7 +140,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 		]
 	});
 	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
-	onDidCreateChatSessionItemEmitter.fire({ original, modified: newSessionItem });
+	onDidCommitChatSessionItemEmitter.fire({ original, modified: newSessionItem });
 }
 
 

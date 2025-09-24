@@ -9,7 +9,7 @@
     "vscode": "^1.102.0"
   },
   "enabledApiProposals": [
-    "chatSessionsProvider",
+    "chatSessionsProvider@2",
     "chatParticipantAdditions",
     "chatParticipantPrivate",
     "remoteCodingAgents",

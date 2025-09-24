@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// version: 2
+
 declare module 'vscode' {
 	/**
 	 * Represents the status of a chat session.
@@ -33,7 +35,11 @@ declare module 'vscode' {
 		 */
 		readonly onDidChangeChatSessionItems: Event<void>;
 
-		readonly onDidCreateChatSessionItem: Event<{ original: ChatSessionItem /** untitled */, modified: ChatSessionItem /** newly created */}>;
+		/**
+		 * Event that the provider can fire to signal that the current (original) chat session should be replaced with a new (modified) chat session.
+		 * The UI can use this information to gracefully migrate the user to the new session.
+		 */
+		readonly onDidCommitChatSessionItem: Event<{ original: ChatSessionItem /** untitled */; modified: ChatSessionItem /** newly created */ }>;
 
 		/**
 		 * Creates a new chat session.
@@ -186,10 +192,12 @@ declare module 'vscode' {
 	}
 
 	export interface ChatContext {
-		readonly chatSessionContext?: {
-			readonly chatSessionItem: ChatSessionItem; // Maps to URI of chat session editor (could be 'untitled-1', etc..)
-			readonly isUntitled: boolean;
-		}
+		readonly chatSessionContext?: ChatSessionContext;
+	}
+
+	export interface ChatSessionContext {
+		readonly chatSessionItem: ChatSessionItem; // Maps to URI of chat session editor (could be 'untitled-1', etc..)
+		readonly isUntitled: boolean;
 	}
 
 	export interface ChatSessionCapabilities {

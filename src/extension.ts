@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 			if (isUntitled) {
 				/* Initial Untitled response */
-				stream.confirmation('Untitled', `This is an untitled session. Get it?.\n\n`, {step: 'create'}, ['yes', 'no']);
+				stream.confirmation('New Chat Session', `Would you like to begin?.\n\n`, {step: 'create'}, ['yes', 'no']);
 				return;
 				
 			} else {

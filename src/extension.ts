@@ -21,19 +21,20 @@ export function activate(context: vscode.ExtensionContext) {
 			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
 			stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
 			if (isUntitled) {
+				const count = _sessionItems.length + 1;
 				/* Exchange this untitled session for a 'real' session */
-				const newSessionId = `session-${Date.now()}`;
+				const newSessionId = `session-${count}`;
 				const newSessionItem: vscode.ChatSessionItem = {
 					id: newSessionId,
-					label: `JoshBot Session ${new Date().toLocaleString()}`,
-					status: vscode.ChatSessionStatus.InProgress
+					label: `JoshBot Session ${count}`,
+					status: vscode.ChatSessionStatus.Completed
 				};
 				_sessionItems.push(newSessionItem);
 				_chatSessions.set(newSessionId, {
 					requestHandler: undefined,
 					history: [
 						new vscode.ChatRequestTurn2(request.prompt, undefined, [], 'joshbot', [], []),
-						new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${newSessionId}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
+						new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
 					]
 				});
 				/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */

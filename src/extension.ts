@@ -17,12 +17,12 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, context, stream, token) => {
+		if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
+			return handleConfirmationData(request, context, stream, token);
+		}
 		if (context.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
 			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
-			if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
-				return handleConfirmationData(request, context, stream, token);
-			}
 			if (isUntitled) {
 				/* Initial Untitled response */
 				stream.confirmation('New Chat Session', `Would you like to begin?\n\n`, { step: 'create' }, ['yes', 'no']);
@@ -35,6 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
 		} else {
 			/*general query*/
 			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
+			stream.confirmation('Ping', 'Would you like to ping me?', { step: 'ping' }, ['yes', 'no']);
 		}
 	});
 	context.subscriptions.push(chatParticipant);
@@ -101,6 +102,11 @@ async function handleConfirmationData(request: vscode.ChatRequest, context: vsco
 			case 'create':
 				await handleCreation(data.accepted, request, context, stream);
 				break;
+			case 'ping':
+				if (data.accepted) {
+					stream.markdown('pong!\n\n');
+				}
+				break;
 			default:
 				stream.markdown(`Unknown confirmation step: ${data.step}\n\n`);
 				break;
@@ -135,8 +141,8 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	_chatSessions.set(newSessionId, {
 		requestHandler: undefined,
 		history: [
-			new vscode.ChatRequestTurn2('Create a new session', undefined, [], 'joshbot', [], []),
-			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
+			new vscode.ChatRequestTurn2('Create a new session', undefined, [], CHAT_SESSION_TYPE, [], []),
+			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, CHAT_SESSION_TYPE) as vscode.ChatResponseTurn
 		]
 	});
 	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
@@ -147,10 +153,10 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
-	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
+	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, CHAT_SESSION_TYPE);
 	return {
 		history: [
-			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2('hello', undefined, [], CHAT_SESSION_TYPE, [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
@@ -164,10 +170,10 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
-	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
+	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, CHAT_SESSION_TYPE);
 	return {
 		history: [
-			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2('hello', undefined, [], CHAT_SESSION_TYPE, [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
@@ -186,13 +192,14 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 }
 
 function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
-	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
+	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart | vscode.ChatResponseConfirmationPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n\n`));
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`This is an untitled session. Send a message to begin our session.\n`));
-	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
+	currentResponseParts.push(new vscode.ChatResponseConfirmationPart('Ping?', `Would you like to begin?\n\n`, { step: 'ping' }, ['yes', 'no']));
+	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, CHAT_SESSION_TYPE);
 	return {
 		history: [
-			new vscode.ChatRequestTurn2('Howdy', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2('Howdy', undefined, [], CHAT_SESSION_TYPE, [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,

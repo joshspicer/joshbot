@@ -454,7 +454,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
   return {
     history: [/* previous conversation */],
     activeResponseCallback: async (stream, token) => {
-      stream.progress('\n\Still working\n');
+      stream.progress('\nStill working\n');
       await new Promise(resolve => setTimeout(resolve, 3000));
       stream.markdown('2+2=...\n');
       await new Promise(resolve => setTimeout(resolve, 3000));

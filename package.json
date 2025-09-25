@@ -127,5 +127,18 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/joshspicer/joshbot.git"
-  }
+  },
+  "homepage": "https://github.com/joshspicer/joshbot#readme",
+  "bugs": {
+    "url": "https://github.com/joshspicer/joshbot/issues"
+  },
+  "keywords": [
+    "vscode",
+    "chat",
+    "ai",
+    "assistant",
+    "proposed-api",
+    "chat-sessions",
+    "interactive"
+  ]
 }

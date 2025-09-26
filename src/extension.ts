@@ -20,6 +20,27 @@ export function activate(context: vscode.ExtensionContext) {
 		if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 			return handleConfirmationData(request, context, stream, token);
 		}
+		
+		// Handle "yolo!" messages
+		const messageText = request.prompt.trim().toLowerCase();
+		if (messageText === 'yolo!' || messageText.startsWith('yolo!')) {
+			stream.markdown(`🎉 YOLO detected! Let's go on an adventure! 🎉\n\n`);
+			
+			// Check for extremely long strings (like the Z string in the problem statement)
+			if (request.prompt.length > 1000) {
+				const zCount = (request.prompt.match(/z/gi) || []).length;
+				if (zCount > 100) {
+					stream.markdown(`Whoa! That's a MASSIVE string of Z's (${zCount} Z characters out of ${request.prompt.length} total)! 😴💤\n\n`);
+					stream.markdown(`Are you trying to put me to sleep with all those Z's? 😂\n\n`);
+				} else {
+					stream.markdown(`Whoa! That's a really long message (${request.prompt.length} characters)! I see you're going all out with the YOLO spirit! 😄\n\n`);
+				}
+			}
+			
+			stream.markdown(`Ready for whatever comes next! What exciting task can I help you with?\n\n`);
+			return;
+		}
+		
 		if (context.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
 			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);

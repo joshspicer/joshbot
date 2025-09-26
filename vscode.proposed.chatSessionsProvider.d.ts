@@ -136,7 +136,7 @@ declare module 'vscode' {
 		 */
 		// TODO: Are these the right types to use?
 		// TODO: link request + response to encourage correct usage?
-		readonly history: ReadonlyArray<ChatRequestTurn | ChatResponseTurn2>;
+		readonly history: ReadonlyArray<ChatRequestTurn | ChatResponseTurn>;
 
 		/**
 		 * Callback invoked by the editor for a currently running response. This allows the session to push items for the

@@ -168,14 +168,14 @@ declare module 'vscode' {
 		value: string;
 		id?: string;
 		metadata?: string;
-		task?: (progress: Progress<any>) => Thenable<string | void>;
+		task?: (progress: Progress<{ value: string; id?: string; metadata?: string }>) => Thenable<string | void>;
 
 		/**
 		 * Creates a new thinking progress part.
 		 * @param value An initial progress message
 		 * @param task A task that will emit thinking parts during its execution
 		 */
-		constructor(value: string, id?: string, metadata?: string, task?: (progress: Progress<any>) => Thenable<string | void>);
+		constructor(value: string, id?: string, metadata?: string, task?: (progress: Progress<{ value: string; id?: string; metadata?: string }>) => Thenable<string | void>);
 	}
 
 	export class ChatResponseReferencePart2 {

@@ -13,13 +13,106 @@ const _chatSessions: Map<string, vscode.ChatSession> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
+/**
+ * Detects if a string contains a repeating pattern (like repeated 'A' characters)
+ * @param text The text to analyze
+ * @returns true if a repeating pattern is detected
+ */
+function isRepeatingPattern(text: string): boolean {
+	if (text.length < 10) return false;
+	
+	// Check for simple single character repetition (like 'AAAAA...')
+	const firstChar = text.charAt(0);
+	let consecutiveCount = 0;
+	for (let i = 0; i < Math.min(text.length, 1000); i++) {
+		if (text.charAt(i) === firstChar) {
+			consecutiveCount++;
+		} else {
+			break;
+		}
+	}
+	
+	// If more than 50% of the first 1000 chars are the same character, it's likely a repeating pattern
+	if (consecutiveCount > 500) {
+		return true;
+	}
+	
+	// Check for short repeating patterns (2-10 characters)
+	for (let patternLength = 2; patternLength <= 10; patternLength++) {
+		const pattern = text.substring(0, patternLength);
+		let matches = 0;
+		
+		for (let i = 0; i < Math.min(text.length - patternLength, 1000); i += patternLength) {
+			if (text.substring(i, i + patternLength) === pattern) {
+				matches++;
+			} else {
+				break;
+			}
+		}
+		
+		// If the pattern repeats more than 20 times, consider it a repeating pattern
+		if (matches > 20) {
+			return true;
+		}
+	}
+	
+	return false;
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, context, stream, token) => {
+		// Handle confirmation responses first
 		if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 			return handleConfirmationData(request, context, stream, token);
 		}
+
+		// Check for extremely long input messages and handle appropriately
+		const prompt = (request as any).prompt || '';
+		if (prompt && typeof prompt === 'string') {
+			const MAX_MESSAGE_LENGTH = 10000; // 10KB limit for chat messages
+			const MEMORY_SAFETY_LIMIT = 100000; // 100KB absolute limit for safety
+			
+			// Absolute safety check to prevent memory issues
+			if (prompt.length > MEMORY_SAFETY_LIMIT) {
+				stream.warning(`🚫 Critical Error: Message exceeds safety limits (${prompt.length.toLocaleString()} characters). Cannot process.\n\n`);
+				stream.markdown(`For your safety and system stability, messages longer than ${MEMORY_SAFETY_LIMIT.toLocaleString()} characters cannot be processed.\n\n`);
+				return;
+			}
+			
+			if (prompt.length > MAX_MESSAGE_LENGTH) {
+				stream.warning(`⚠️ Message too long! Your message has ${prompt.length.toLocaleString()} characters, but the maximum allowed is ${MAX_MESSAGE_LENGTH.toLocaleString()} characters.\n\n`);
+				
+				// Safely truncate for display (prevent memory issues)
+				const truncatedPrompt = prompt.substring(0, 100);
+				const hasRepeatingPattern = isRepeatingPattern(prompt);
+				
+				if (hasRepeatingPattern) {
+					stream.markdown(`I noticed your message contains a repeating pattern: \`${truncatedPrompt}...\`\n\n`);
+					stream.markdown(`**For very long messages with repeating patterns, please consider:**\n`);
+					stream.markdown(`- Summarizing the content instead\n`);
+					stream.markdown(`- Using a file upload for large data\n`);
+					stream.markdown(`- Breaking the request into smaller parts\n\n`);
+					
+					// Provide helpful context about the detected pattern
+					const endSnippet = prompt.length > 200 ? prompt.substring(prompt.length - 50) : '';
+					if (endSnippet && endSnippet !== truncatedPrompt.substring(0, 50)) {
+						stream.markdown(`Your message ends with: \`...${endSnippet}\`\n\n`);
+					}
+				} else {
+					stream.markdown(`Your message starts with: \`${truncatedPrompt}...\`\n\n`);
+					stream.markdown(`Please shorten your message and try again.\n\n`);
+				}
+				return;
+			}
+			
+			// For moderately long messages, acknowledge the content
+			if (prompt.length > 500) {
+				stream.markdown(`📝 I received your message (${prompt.length} characters). Let me help you with that.\n\n`);
+			}
+		}
+
 		if (context.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
 			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);

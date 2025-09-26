@@ -34,6 +34,11 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		} else {
 			/*general query*/
+			// Handle special case for "nice" with long Z string (testing thinking progress)
+			if (request.prompt.toLowerCase().includes('nice') && request.prompt.includes('Z'.repeat(10))) {
+				return handleLongThinkingProcess(request, stream);
+			}
+			
 			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
 			stream.confirmation('Ping', 'Would you like to ping me?', { step: 'ping' }, ['yes', 'no']);
 		}
@@ -91,6 +96,49 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.chat.registerChatSessionContentProvider(CHAT_SESSION_TYPE, sessionProvider, chatParticipant)
 	);
+}
+
+async function handleLongThinkingProcess(request: vscode.ChatRequest, stream: vscode.ChatResponseStream): Promise<void> {
+	// Handle the "nice" + long Z string case with thinking progress
+	const prompt = request.prompt;
+	const zCount = (prompt.match(/Z/g) || []).length;
+	
+	// Start with a nice response
+	stream.markdown(`Nice! I see you've sent me a message with ${zCount} Z characters. `);
+	stream.markdown(`This looks like a great opportunity to demonstrate thinking progress!\n\n`);
+	
+	// Use thinking progress to show processing of the long string
+	if (stream.thinkingProgress) {
+		// Simulate thinking process
+		stream.thinkingProgress({
+			text: "Hmm, this is a very long string of Z's. Let me think about what this means...",
+			id: "thinking-1"
+		});
+		
+		await new Promise(resolve => setTimeout(resolve, 1000));
+		
+		stream.thinkingProgress({
+			text: "The Z's could represent sleeping, or perhaps it's a stress test for large text handling. Let me count them...",
+			id: "thinking-2"
+		});
+		
+		await new Promise(resolve => setTimeout(resolve, 1000));
+		
+		stream.thinkingProgress({
+			text: `I count ${zCount} Z characters. That's quite a lot! This seems like a test of my ability to handle large inputs.`,
+			id: "thinking-3"
+		});
+		
+		await new Promise(resolve => setTimeout(resolve, 500));
+	}
+	
+	// Provide final response
+	stream.markdown(`After thinking about it, I believe you're testing my ability to handle large text inputs gracefully. `);
+	stream.markdown(`The ${zCount} Z characters could represent:\n`);
+	stream.markdown(`- Someone falling asleep (💤)\n`);
+	stream.markdown(`- A performance test for large text processing\n`);
+	stream.markdown(`- A stress test of the thinking progress feature\n\n`);
+	stream.markdown(`Thanks for the interesting challenge! 🤖`);
 }
 
 async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {

@@ -176,7 +176,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
-			stream.progress(`\n\nStill working\n`);
+			stream.progress(`\n\\Still working\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`2+2=...\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));

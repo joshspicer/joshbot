@@ -11,7 +11,9 @@
 		"alwaysStrict": true,
 		"noImplicitAny": true,
 		"noImplicitReturns": true,
-		"experimentalDecorators": true
+		"experimentalDecorators": true,
+		"skipLibCheck": true
 	},
-	"include": ["src/**/*", "vscode.d.ts", "vscode.proposed.*"]
+	"include": ["src/**/*", "vscode.d.ts", "vscode.proposed.*"],
+	"exclude": ["node_modules", "**/*.test.js"]
 }

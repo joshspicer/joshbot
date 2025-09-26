@@ -74,6 +74,12 @@
         "title": "Squirrel!",
         "category": "JoshBot",
         "icon": "$(squirrel)"
+      },
+      {
+        "command": "joshbot.test",
+        "title": "Test!",
+        "category": "JoshBot",
+        "icon": "$(beaker)"
       }
     ],
     "configuration": {
@@ -100,6 +106,10 @@
         {
           "command": "joshbot.snake",
           "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.test",
+          "when": "chatSessionType == josh-bot"
         }
       ]
     }
@@ -117,13 +127,18 @@
     "disabled_downloadapi": "npx vscode-dts dev"
   },
   "devDependencies": {
-    "@types/vscode": "^1.102.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "16.x",
+    "@types/vscode": "^1.102.0",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
+    "@vscode/dts": "^0.4.1",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.6.0",
-    "typescript": "^5.8.0",
-    "@vscode/dts": "^0.4.1"
+    "eslint": "^9.36.0",
+    "mocha": "^11.7.2",
+    "typescript": "^5.8.0"
   },
-  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/joshspicer/joshbot.git"

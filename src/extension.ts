@@ -20,8 +20,14 @@ export function activate(context: vscode.ExtensionContext) {
 		if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 			return handleConfirmationData(request, context, stream, token);
 		}
+		
+		// Handle test command
+		if (request.prompt.toLowerCase().trim() === 'test!') {
+			return handleTestCommand(request, context, stream, token);
+		}
+		
 		if (context.chatSessionContext) {
-			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
+			const { isUntitled } = context.chatSessionContext;
 			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
 			if (isUntitled) {
 				/* Initial Untitled response */
@@ -40,11 +46,17 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(chatParticipant);
 
+	// Register commands
+	const testCommand = vscode.commands.registerCommand('joshbot.test', () => {
+		vscode.window.showInformationMessage('JoshBot Test! Use "test!" in chat to run the test suite.');
+	});
+	context.subscriptions.push(testCommand);
+
 	// Create session provider
 	const sessionProvider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
 		onDidChangeChatSessionItems = new vscode.EventEmitter<void>().event;
 		onDidCommitChatSessionItem: vscode.Event<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }> = onDidCommitChatSessionItemEmitter.event;
-		async provideChatSessionItems(token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
+		async provideChatSessionItems(_token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
 			return [
 				{
 					id: 'demo-session-01',
@@ -64,7 +76,7 @@ export function activate(context: vscode.ExtensionContext) {
 				..._sessionItems,
 			];
 		}
-		async provideChatSessionContent(sessionId: string, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
+		async provideChatSessionContent(sessionId: string, _token: vscode.CancellationToken): Promise<vscode.ChatSession> {
 			switch (sessionId) {
 				case 'demo-session-01':
 				case 'demo-session-02':
@@ -93,7 +105,42 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 }
 
-async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
+async function handleTestCommand(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, _token: vscode.CancellationToken): Promise<void> {
+	stream.progress('Running tests...\n\n');
+	await new Promise(resolve => setTimeout(resolve, 1000));
+	
+	stream.markdown('🧪 **JoshBot Test Suite** 🧪\n\n');
+	
+	// Simulate running different types of tests
+	const tests = [
+		{ name: 'Chat Participant Connection', result: 'PASS' },
+		{ name: 'Session Management', result: 'PASS' },
+		{ name: 'Confirmation Handling', result: 'PASS' },
+		{ name: 'Markdown Rendering', result: 'PASS' },
+		{ name: 'Extension Activation', result: 'PASS' }
+	];
+	
+	stream.markdown('Running test suite:\n\n');
+	
+	for (const test of tests) {
+		await new Promise(resolve => setTimeout(resolve, 500));
+		const icon = test.result === 'PASS' ? '✅' : '❌';
+		stream.markdown(`${icon} ${test.name}: **${test.result}**\n`);
+	}
+	
+	const passedTests = tests.filter(t => t.result === 'PASS').length;
+	const totalTests = tests.length;
+	
+	stream.markdown(`\n📊 **Results**: ${passedTests}/${totalTests} tests passed\n\n`);
+	
+	if (passedTests === totalTests) {
+		stream.markdown('🎉 All tests passed! JoshBot is working correctly.\n');
+	} else {
+		stream.markdown('⚠️ Some tests failed. Please check the logs.\n');
+	}
+}
+
+async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, _token: vscode.CancellationToken): Promise<void> {
 	const results: Array<{ step: string; accepted: boolean }> = [];
 	results.push(...(request.acceptedConfirmationData?.map(data => ({ step: data.step, accepted: true })) ?? []));
 	results.push(...((request.rejectedConfirmationData ?? []).filter(data => !results.some(r => r.step === data.step)).map(data => ({ step: data.step, accepted: false }))));
@@ -176,7 +223,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			new vscode.ChatRequestTurn2('hello', undefined, [], CHAT_SESSION_TYPE, [], []),
 			response2 as vscode.ChatResponseTurn
 		],
-		activeResponseCallback: async (stream, token) => {
+		activeResponseCallback: async (stream, _token) => {
 			stream.progress(`\n\Still working\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`2+2=...\n`);

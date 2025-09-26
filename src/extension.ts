@@ -23,14 +23,16 @@ export function activate(context: vscode.ExtensionContext) {
 		
 		// Handle "yolo!" messages
 		const messageText = request.prompt.trim().toLowerCase();
-		if (messageText === 'yolo!' || messageText.startsWith('yolo!')) {
+		if (messageText.startsWith('yolo!')) {
 			stream.markdown(`🎉 YOLO detected! Let's go on an adventure! 🎉\n\n`);
 			
 			// Check for extremely long strings (like the Z string in the problem statement)
 			if (request.prompt.length > 1000) {
-				const zCount = (request.prompt.match(/z/gi) || []).length;
+				// For performance, only count Z's in the first 5000 characters of very long strings
+				const searchText = request.prompt.length > 5000 ? request.prompt.substring(0, 5000) : request.prompt;
+				const zCount = (searchText.match(/z/gi) || []).length;
 				if (zCount > 100) {
-					stream.markdown(`Whoa! That's a MASSIVE string of Z's (${zCount} Z characters out of ${request.prompt.length} total)! 😴💤\n\n`);
+					stream.markdown(`Whoa! That's a MASSIVE string of Z's (${zCount}+ Z characters out of ${request.prompt.length} total)! 😴💤\n\n`);
 					stream.markdown(`Are you trying to put me to sleep with all those Z's? 😂\n\n`);
 				} else {
 					stream.markdown(`Whoa! That's a really long message (${request.prompt.length} characters)! I see you're going all out with the YOLO spirit! 😄\n\n`);

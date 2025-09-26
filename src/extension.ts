@@ -7,16 +7,53 @@ import * as vscode from 'vscode';
 
 const CHAT_SESSION_TYPE = 'josh-bot';
 
+// Configuration constants
+const MAX_INPUT_LENGTH = 10000; // Maximum allowed input length in characters
+const TRUNCATION_PREVIEW_LENGTH = 200; // Characters to show when truncating
+
 // Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
+/**
+ * Validates and processes user input, handling overly long messages
+ * @param input The raw user input
+ * @returns Object containing validation result and processed input
+ */
+function validateAndProcessInput(input: string): { isValid: boolean; processedInput: string; warningMessage?: string } {
+	if (!input) {
+		return { isValid: true, processedInput: input };
+	}
+	
+	if (input.length <= MAX_INPUT_LENGTH) {
+		return { isValid: true, processedInput: input };
+	}
+	
+	// Input is too long - truncate and provide warning
+	const truncatedInput = input.substring(0, TRUNCATION_PREVIEW_LENGTH);
+	const warningMessage = `⚠️ Input message was too long (${input.length.toLocaleString()} characters, maximum allowed: ${MAX_INPUT_LENGTH.toLocaleString()}). Message has been truncated for processing.\n\n**Truncated message preview:**\n${truncatedInput}${input.length > TRUNCATION_PREVIEW_LENGTH ? '...' : ''}\n\n`;
+	
+	return {
+		isValid: false,
+		processedInput: truncatedInput,
+		warningMessage: warningMessage
+	};
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, context, stream, token) => {
+		// Validate and process input length first
+		const inputValidation = validateAndProcessInput(request.prompt);
+		
+		// If input was too long, show warning
+		if (!inputValidation.isValid && inputValidation.warningMessage) {
+			stream.warning(inputValidation.warningMessage);
+		}
+		
 		if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 			return handleConfirmationData(request, context, stream, token);
 		}
@@ -30,10 +67,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 			} else {
 				/* follow up */
+				if (inputValidation.processedInput.trim()) {
+					stream.markdown(`You said: "${inputValidation.processedInput}"\n\n`);
+				}
 				stream.markdown(`Welcome back!`)
 			}
 		} else {
 			/*general query*/
+			if (inputValidation.processedInput.trim()) {
+				stream.markdown(`You said: "${inputValidation.processedInput}"\n\n`);
+			}
 			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
 			stream.confirmation('Ping', 'Would you like to ping me?', { step: 'ping' }, ['yes', 'no']);
 		}

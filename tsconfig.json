@@ -13,5 +13,5 @@
 		"noImplicitReturns": true,
 		"experimentalDecorators": true
 	},
-	"include": ["src/**/*", "vscode.d.ts", "vscode.proposed.*"]
+	"include": ["src/**/*", "vscode.proposed.chatParticipantAdditions.d.ts", "vscode.proposed.chatParticipantPrivate.d.ts", "vscode.proposed.chatSessionsProvider.d.ts", "vscode.proposed.languageModelThinkingPart.d.ts", "vscode.proposed.remoteCodingAgents.d.ts"]
 }

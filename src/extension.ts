@@ -151,7 +151,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 
 
 function completedChatSessionContent(sessionId: string): vscode.ChatSession {
-	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
+	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, CHAT_SESSION_TYPE);
 	return {
@@ -168,7 +168,7 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 }
 
 function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
-	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
+	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, CHAT_SESSION_TYPE);
 	return {
@@ -192,10 +192,9 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 }
 
 function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
-	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart | vscode.ChatResponseConfirmationPart> = [];
+	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n\n`));
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`This is an untitled session. Send a message to begin our session.\n`));
-	currentResponseParts.push(new vscode.ChatResponseConfirmationPart('Ping?', `Would you like to begin?\n\n`, { step: 'ping' }, ['yes', 'no']));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, CHAT_SESSION_TYPE);
 	return {
 		history: [

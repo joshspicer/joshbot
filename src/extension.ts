@@ -127,7 +127,10 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	}
 
 	stream.progress(`Creating new session...\n\n`);
-	await new Promise(resolve => setTimeout(resolve, 3000));
+	await new Promise<void>((resolve, reject) => {
+		const timeout = setTimeout(resolve, 3000);
+		// No token check needed here as handleCreation doesn't receive a token parameter
+	});
 
 	/* Exchange this untitled session for a 'real' session */
 	const count = _sessionItems.length + 1;
@@ -177,10 +180,42 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
-			stream.progress(`\n\Still working\n`);
-			await new Promise(resolve => setTimeout(resolve, 3000));
+			stream.progress(`\n\nStill working\n`);
+			await new Promise<void>((resolve, reject) => {
+				if (token.isCancellationRequested) {
+					reject(new Error('Operation cancelled'));
+					return;
+				}
+				const timeout = setTimeout(resolve, 3000);
+				const disposable = token.onCancellationRequested(() => {
+					clearTimeout(timeout);
+					reject(new Error('Operation cancelled'));
+				});
+				timeout.unref?.();
+			});
+			
+			if (token.isCancellationRequested) {
+				return;
+			}
+			
 			stream.markdown(`2+2=...\n`);
-			await new Promise(resolve => setTimeout(resolve, 3000));
+			await new Promise<void>((resolve, reject) => {
+				if (token.isCancellationRequested) {
+					reject(new Error('Operation cancelled'));
+					return;
+				}
+				const timeout = setTimeout(resolve, 3000);
+				const disposable = token.onCancellationRequested(() => {
+					clearTimeout(timeout);
+					reject(new Error('Operation cancelled'));
+				});
+				timeout.unref?.();
+			});
+			
+			if (token.isCancellationRequested) {
+				return;
+			}
+			
 			stream.markdown(`4!\n`);
 		},
 		requestHandler: undefined,

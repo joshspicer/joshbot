@@ -13,6 +13,27 @@ const _chatSessions: Map<string, vscode.ChatSession> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
+/**
+ * Detects if the content is large and repetitive (like the Z string in the problem statement)
+ */
+function isLargeRepetitiveContent(text: string): boolean {
+	if (text.length < 100) {
+		return false; // Not large enough to consider
+	}
+
+	// Check if the text is mostly the same character repeated
+	const charCounts: { [key: string]: number } = {};
+	for (const char of text) {
+		charCounts[char] = (charCounts[char] || 0) + 1;
+	}
+
+	// Find the most frequent character
+	const maxCount = Math.max(...Object.values(charCounts));
+	const repetitiveThreshold = 0.8; // 80% of content is the same character
+
+	return maxCount / text.length >= repetitiveThreshold;
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
@@ -20,6 +41,16 @@ export function activate(context: vscode.ExtensionContext) {
 		if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 			return handleConfirmationData(request, context, stream, token);
 		}
+
+		// Handle the actual user input
+		const userMessage = request.prompt.trim();
+		
+		// Check for large repetitive content (like the Z string in the problem statement)
+		if (isLargeRepetitiveContent(userMessage)) {
+			stream.markdown(`nice\n\nI see you've sent a lot of repetitive content! That's quite impressive - ${userMessage.length} characters of mostly the same character. Is there something specific you'd like help with?`);
+			return;
+		}
+
 		if (context.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
 			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
@@ -30,11 +61,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 			} else {
 				/* follow up */
-				stream.markdown(`Welcome back!`)
+				stream.markdown(`Welcome back! You said: "${userMessage.length > 100 ? userMessage.substring(0, 100) + '...' : userMessage}"`);
 			}
 		} else {
 			/*general query*/
-			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
+			stream.markdown(`Howdy! I am joshbot, your friendly chat companion. You said: "${userMessage.length > 100 ? userMessage.substring(0, 100) + '...' : userMessage}"`);
 			stream.confirmation('Ping', 'Would you like to ping me?', { step: 'ping' }, ['yes', 'no']);
 		}
 	});

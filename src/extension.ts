@@ -17,8 +17,8 @@ let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.Ch
  * Detects if the content is large and repetitive (like the Z string in the problem statement)
  */
 function isLargeRepetitiveContent(text: string): boolean {
-	if (text.length < 100) {
-		return false; // Not large enough to consider
+	if (!text || text.length < 100) {
+		return false; // Not large enough to consider or empty
 	}
 
 	// Check if the text is mostly the same character repeated
@@ -28,7 +28,10 @@ function isLargeRepetitiveContent(text: string): boolean {
 	}
 
 	// Find the most frequent character
-	const maxCount = Math.max(...Object.values(charCounts));
+	const counts = Object.values(charCounts);
+	if (counts.length === 0) return false;
+	
+	const maxCount = Math.max(...counts);
 	const repetitiveThreshold = 0.8; // 80% of content is the same character
 
 	return maxCount / text.length >= repetitiveThreshold;
@@ -43,11 +46,17 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		// Handle the actual user input
-		const userMessage = request.prompt.trim();
+		const userMessage = request.prompt?.trim() || '';
 		
 		// Check for large repetitive content (like the Z string in the problem statement)
 		if (isLargeRepetitiveContent(userMessage)) {
 			stream.markdown(`nice\n\nI see you've sent a lot of repetitive content! That's quite impressive - ${userMessage.length} characters of mostly the same character. Is there something specific you'd like help with?`);
+			return;
+		}
+
+		// Handle empty or very short messages
+		if (userMessage.length === 0) {
+			stream.markdown(`Hello! You didn't say anything. How can I help you today?`);
 			return;
 		}
 

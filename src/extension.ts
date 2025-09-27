@@ -35,7 +35,11 @@ export function activate(context: vscode.ExtensionContext) {
 		} else {
 			/*general query*/
 			// Handle special case for "nice" with long Z string (testing thinking progress)
-			if (request.prompt.toLowerCase().includes('nice') && request.prompt.includes('Z'.repeat(10))) {
+			const prompt = request.prompt.toLowerCase();
+			const hasNice = prompt.includes('nice');
+			const hasLongZString = request.prompt.includes('Z'.repeat(5)) || request.prompt.split('Z').length > 10;
+			
+			if (hasNice && hasLongZString) {
 				return handleLongThinkingProcess(request, stream);
 			}
 			
@@ -104,41 +108,67 @@ async function handleLongThinkingProcess(request: vscode.ChatRequest, stream: vs
 	const zCount = (prompt.match(/Z/g) || []).length;
 	
 	// Start with a nice response
-	stream.markdown(`Nice! I see you've sent me a message with ${zCount} Z characters. `);
+	stream.markdown(`Nice! I see you've sent me a message with ${zCount.toLocaleString()} Z characters. `);
 	stream.markdown(`This looks like a great opportunity to demonstrate thinking progress!\n\n`);
 	
 	// Use thinking progress to show processing of the long string
 	if (stream.thinkingProgress) {
-		// Simulate thinking process
-		stream.thinkingProgress({
-			text: "Hmm, this is a very long string of Z's. Let me think about what this means...",
-			id: "thinking-1"
-		});
-		
-		await new Promise(resolve => setTimeout(resolve, 1000));
-		
-		stream.thinkingProgress({
-			text: "The Z's could represent sleeping, or perhaps it's a stress test for large text handling. Let me count them...",
-			id: "thinking-2"
-		});
-		
-		await new Promise(resolve => setTimeout(resolve, 1000));
-		
-		stream.thinkingProgress({
-			text: `I count ${zCount} Z characters. That's quite a lot! This seems like a test of my ability to handle large inputs.`,
-			id: "thinking-3"
-		});
-		
-		await new Promise(resolve => setTimeout(resolve, 500));
+		try {
+			// Simulate thinking process with progressive analysis
+			stream.thinkingProgress({
+				text: "Hmm, this is a very long string of Z's. Let me think about what this means...",
+				id: "thinking-1",
+				metadata: "initial-analysis"
+			});
+			
+			await new Promise(resolve => setTimeout(resolve, 1000));
+			
+			stream.thinkingProgress({
+				text: "The Z's could represent sleeping, or perhaps it's a stress test for large text handling. Let me count them systematically...",
+				id: "thinking-2",
+				metadata: "counting-analysis"
+			});
+			
+			await new Promise(resolve => setTimeout(resolve, 1000));
+			
+			stream.thinkingProgress({
+				text: `I count ${zCount.toLocaleString()} Z characters. That's quite a lot! This seems like a test of my ability to handle large inputs efficiently.`,
+				id: "thinking-3",
+				metadata: "final-analysis"
+			});
+			
+			await new Promise(resolve => setTimeout(resolve, 500));
+			
+			// Additional thinking step for very large inputs
+			if (zCount > 5000) {
+				stream.thinkingProgress({
+					text: "This is definitely a stress test - over 5,000 characters! I'm handling this gracefully though.",
+					id: "thinking-4",
+					metadata: "stress-test-analysis"
+				});
+				
+				await new Promise(resolve => setTimeout(resolve, 300));
+			}
+		} catch (error) {
+			// Fallback if thinking progress is not supported
+			console.log('Thinking progress not supported, continuing with regular response');
+		}
 	}
 	
-	// Provide final response
-	stream.markdown(`After thinking about it, I believe you're testing my ability to handle large text inputs gracefully. `);
-	stream.markdown(`The ${zCount} Z characters could represent:\n`);
-	stream.markdown(`- Someone falling asleep (💤)\n`);
-	stream.markdown(`- A performance test for large text processing\n`);
-	stream.markdown(`- A stress test of the thinking progress feature\n\n`);
-	stream.markdown(`Thanks for the interesting challenge! 🤖`);
+	// Provide final response with enhanced analysis
+	stream.markdown(`After thinking about it carefully, I believe you're testing my ability to handle large text inputs gracefully. `);
+	stream.markdown(`\nThe **${zCount.toLocaleString()}** Z characters could represent:\n`);
+	stream.markdown(`- 💤 Someone falling asleep or deep in thought\n`);
+	stream.markdown(`- 🧪 A performance test for large text processing\n`);
+	stream.markdown(`- 🔄 A stress test of the thinking progress feature\n`);
+	stream.markdown(`- 📊 A memory and UI handling test\n\n`);
+	
+	// Add performance insights
+	if (zCount > 1000) {
+		stream.markdown(`**Performance Note**: Successfully processed ${zCount.toLocaleString()} characters with thinking progress demonstration.\n\n`);
+	}
+	
+	stream.markdown(`Thanks for the interesting challenge! This was a great test of the thinking progress API. 🤖✨`);
 }
 
 async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {

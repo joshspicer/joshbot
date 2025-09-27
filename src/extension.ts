@@ -186,12 +186,15 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 					reject(new Error('Operation cancelled'));
 					return;
 				}
-				const timeout = setTimeout(resolve, 3000);
+				const timeout = setTimeout(() => {
+					disposable.dispose();
+					resolve();
+				}, 3000);
 				const disposable = token.onCancellationRequested(() => {
 					clearTimeout(timeout);
+					disposable.dispose();
 					reject(new Error('Operation cancelled'));
 				});
-				timeout.unref?.();
 			});
 			
 			if (token.isCancellationRequested) {
@@ -204,12 +207,15 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 					reject(new Error('Operation cancelled'));
 					return;
 				}
-				const timeout = setTimeout(resolve, 3000);
+				const timeout = setTimeout(() => {
+					disposable.dispose();
+					resolve();
+				}, 3000);
 				const disposable = token.onCancellationRequested(() => {
 					clearTimeout(timeout);
+					disposable.dispose();
 					reject(new Error('Operation cancelled'));
 				});
-				timeout.unref?.();
 			});
 			
 			if (token.isCancellationRequested) {

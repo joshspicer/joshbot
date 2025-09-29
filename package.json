@@ -117,13 +117,17 @@
     "disabled_downloadapi": "npx vscode-dts dev"
   },
   "devDependencies": {
-    "@types/vscode": "^1.102.0",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "16.x",
+    "@types/vscode": "^1.102.0",
+    "@vscode/dts": "^0.4.1",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.6.0",
-    "typescript": "^5.8.0",
-    "@vscode/dts": "^0.4.1"
+    "glob": "^11.0.3",
+    "mocha": "^11.7.2",
+    "typescript": "^5.8.0"
   },
-  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/joshspicer/joshbot.git"

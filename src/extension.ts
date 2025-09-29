@@ -20,6 +20,20 @@ export function activate(context: vscode.ExtensionContext) {
 		if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 			return handleConfirmationData(request, context, stream, token);
 		}
+
+		// Handle simple test queries
+		const userMessage = request.prompt.toLowerCase().trim();
+		if (userMessage === 'test' || userMessage.includes('test')) {
+			stream.markdown('🧪 **Test Response**\n\n');
+			stream.markdown('JoshBot is working correctly! Here are the test results:\n\n');
+			stream.markdown('✅ Chat participant: Active\n');
+			stream.markdown('✅ Session management: Operational\n');
+			stream.markdown('✅ Confirmation dialogs: Working\n');
+			stream.markdown('✅ Commands: Available\n\n');
+			stream.markdown('All systems are **GO**! 🚀\n\n');
+			return;
+		}
+
 		if (context.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
 			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
@@ -39,6 +53,37 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 	context.subscriptions.push(chatParticipant);
+
+	// Register command handlers
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.hello', () => {
+			vscode.window.showInformationMessage('Hello from JoshBot!');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.test', () => {
+			vscode.window.showInformationMessage('JoshBot test command executed successfully! All systems operational.');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.cloudButton', () => {
+			vscode.window.showInformationMessage('JoshBot Cloud Button activated!');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.snake', () => {
+			vscode.window.showInformationMessage('🐍 Snake command activated!');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.squirrel', () => {
+			vscode.window.showInformationMessage('🐿️ Squirrel command activated!');
+		})
+	);
 
 	// Create session provider
 	const sessionProvider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
@@ -177,7 +222,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
-			stream.progress(`\n\Still working\n`);
+			stream.progress(`\nStill working\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`2+2=...\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));

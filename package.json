@@ -59,6 +59,11 @@
         "category": "JoshBot"
       },
       {
+        "command": "joshbot.test",
+        "title": "Test",
+        "category": "JoshBot"
+      },
+      {
         "command": "joshbot.cloudButton",
         "title": "Cloud Button",
         "category": "JoshBot"

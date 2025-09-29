@@ -403,7 +403,7 @@ The extension leverages these APIs through the `enabledApiProposals` configurati
 - `chatSessionsProvider@2`
 - `chatParticipantAdditions` 
 - `chatParticipantPrivate`
-- `languageModelThinkingPart`
 - `remoteCodingAgents`
+- `languageModelThinkingPart`
 
 This allows the extension to provide advanced chat functionality while the APIs are still in development and not yet part of the stable VS Code API.

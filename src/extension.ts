@@ -21,20 +21,23 @@ export function activate(context: vscode.ExtensionContext) {
 			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
 			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
 			if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
-				return handleConfirmationData(request, context, stream, token);
+				await handleConfirmationData(request, context, stream, token);
+				return {};
 			}
 			if (isUntitled) {
 				/* Initial Untitled response */
 				stream.confirmation('New Chat Session', `Would you like to begin?\n\n`, { step: 'create' }, ['yes', 'no']);
-				return;
+				return {};
 
 			} else {
 				/* follow up */
-				stream.markdown(`Welcome back!`)
+				stream.markdown(`Welcome back!`);
+				return {};
 			}
 		} else {
 			/*general query*/
 			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
+			return {};
 		}
 	});
 	context.subscriptions.push(chatParticipant);

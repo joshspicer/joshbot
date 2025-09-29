@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		// Handle simple test queries
 		const userMessage = request.prompt.toLowerCase().trim();
-		if (userMessage === 'test' || userMessage.includes('test')) {
+		if (userMessage === 'test' || userMessage === 'test me' || userMessage === 'run test') {
 			stream.markdown('🧪 **Test Response**\n\n');
 			stream.markdown('JoshBot is working correctly! Here are the test results:\n\n');
 			stream.markdown('✅ Chat participant: Active\n');
@@ -55,35 +55,17 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(chatParticipant);
 
 	// Register command handlers
-	context.subscriptions.push(
-		vscode.commands.registerCommand('joshbot.hello', () => {
-			vscode.window.showInformationMessage('Hello from JoshBot!');
-		})
-	);
+	const commands = [
+		{ id: 'joshbot.hello', handler: () => vscode.window.showInformationMessage('Hello from JoshBot!') },
+		{ id: 'joshbot.test', handler: () => vscode.window.showInformationMessage('JoshBot test command executed successfully! All systems operational.') },
+		{ id: 'joshbot.cloudButton', handler: () => vscode.window.showInformationMessage('JoshBot Cloud Button activated!') },
+		{ id: 'joshbot.snake', handler: () => vscode.window.showInformationMessage('🐍 Snake command activated!') },
+		{ id: 'joshbot.squirrel', handler: () => vscode.window.showInformationMessage('🐿️ Squirrel command activated!') }
+	];
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('joshbot.test', () => {
-			vscode.window.showInformationMessage('JoshBot test command executed successfully! All systems operational.');
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('joshbot.cloudButton', () => {
-			vscode.window.showInformationMessage('JoshBot Cloud Button activated!');
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('joshbot.snake', () => {
-			vscode.window.showInformationMessage('🐍 Snake command activated!');
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('joshbot.squirrel', () => {
-			vscode.window.showInformationMessage('🐿️ Squirrel command activated!');
-		})
-	);
+	commands.forEach(cmd => {
+		context.subscriptions.push(vscode.commands.registerCommand(cmd.id, cmd.handler));
+	});
 
 	// Create session provider
 	const sessionProvider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {

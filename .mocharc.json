@@ -1,0 +1,6 @@
+{
+    "require": [],
+    "ui": "tdd",
+    "color": true,
+    "timeout": 10000
+}

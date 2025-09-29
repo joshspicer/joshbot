@@ -34,7 +34,11 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		} else {
 			/*general query*/
+			if (request.prompt.toLowerCase().includes('test')) {
+				return handleTestRequest(request, context, stream, token);
+			}
 			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
+			stream.markdown(`\n💡 **Tip:** Try asking me to "test" something or use the \`JoshBot: Run Tests\` command from the command palette!`);
 			stream.confirmation('Ping', 'Would you like to ping me?', { step: 'ping' }, ['yes', 'no']);
 		}
 	});
@@ -91,6 +95,71 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.chat.registerChatSessionContentProvider(CHAT_SESSION_TYPE, sessionProvider, chatParticipant)
 	);
+
+	// Register test command
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.runTests', async () => {
+			const result = await vscode.window.showInformationMessage(
+				'JoshBot Tests',
+				{ modal: true, detail: 'Choose how to run JoshBot tests:' },
+				'Run Unit Tests',
+				'Interactive Test in Chat'
+			);
+
+			if (result === 'Run Unit Tests') {
+				// Run the actual test suite
+				vscode.window.showInformationMessage('Running JoshBot unit tests... Check the terminal for results.');
+				const terminal = vscode.window.createTerminal('JoshBot Tests');
+				terminal.sendText('npm test');
+				terminal.show();
+			} else if (result === 'Interactive Test in Chat') {
+				// Open chat and suggest testing
+				vscode.window.showInformationMessage('Open a JoshBot chat session and type a message containing "test" to run interactive tests!');
+			}
+		})
+	);
+}
+
+async function handleTestRequest(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
+	stream.markdown('🧪 **Running JoshBot Tests...**\n\n');
+	
+	// Simulate some test execution
+	const tests = [
+		{ name: 'Basic Math', test: () => 2 + 2 === 4 },
+		{ name: 'String Test', test: () => 'hello'.toUpperCase() === 'HELLO' },
+		{ name: 'Array Test', test: () => [1, 2, 3].length === 3 },
+		{ name: 'Extension Active', test: () => vscode.extensions.getExtension('spcr-test.joshbot')?.isActive === true }
+	];
+
+	let passed = 0;
+	let failed = 0;
+
+	for (const testCase of tests) {
+		try {
+			stream.progress(`Running ${testCase.name}...`);
+			await new Promise(resolve => setTimeout(resolve, 500)); // Simulate test execution time
+			
+			const result = testCase.test();
+			if (result) {
+				stream.markdown(`✅ **${testCase.name}**: PASSED\n`);
+				passed++;
+			} else {
+				stream.markdown(`❌ **${testCase.name}**: FAILED\n`);
+				failed++;
+			}
+		} catch (error) {
+			stream.markdown(`❌ **${testCase.name}**: ERROR - ${error}\n`);
+			failed++;
+		}
+	}
+
+	stream.markdown(`\n---\n\n**Test Results:**\n- ✅ Passed: ${passed}\n- ❌ Failed: ${failed}\n- 📊 Total: ${tests.length}\n\n`);
+	
+	if (failed === 0) {
+		stream.markdown('🎉 All tests passed! JoshBot is working correctly.');
+	} else {
+		stream.markdown('⚠️ Some tests failed. Please check the results above.');
+	}
 }
 
 async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {

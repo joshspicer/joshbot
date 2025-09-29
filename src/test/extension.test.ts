@@ -6,14 +6,16 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 
+const EXTENSION_ID = 'spcr-test.joshbot';
+
 suite('JoshBot Extension Tests', () => {
 	
 	test('Extension should be present', () => {
-		assert.ok(vscode.extensions.getExtension('spcr-test.joshbot'));
+		assert.ok(vscode.extensions.getExtension(EXTENSION_ID));
 	});
 
 	test('Extension should activate', async () => {
-		const extension = vscode.extensions.getExtension('spcr-test.joshbot');
+		const extension = vscode.extensions.getExtension(EXTENSION_ID);
 		if (extension) {
 			await extension.activate();
 			assert.ok(extension.isActive);

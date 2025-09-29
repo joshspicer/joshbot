@@ -6,6 +6,7 @@
 import * as vscode from 'vscode';
 
 const CHAT_SESSION_TYPE = 'josh-bot';
+const EXTENSION_ID = 'spcr-test.joshbot';
 
 // Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];
@@ -110,7 +111,8 @@ export function activate(context: vscode.ExtensionContext) {
 				// Run the actual test suite
 				vscode.window.showInformationMessage('Running JoshBot unit tests... Check the terminal for results.');
 				const terminal = vscode.window.createTerminal('JoshBot Tests');
-				terminal.sendText('npm test');
+				// Check if npm is available, fallback to npx if needed
+				terminal.sendText('npm test || npx npm test');
 				terminal.show();
 			} else if (result === 'Interactive Test in Chat') {
 				// Open chat and suggest testing
@@ -128,7 +130,7 @@ async function handleTestRequest(request: vscode.ChatRequest, context: vscode.Ch
 		{ name: 'Basic Math', test: () => 2 + 2 === 4 },
 		{ name: 'String Test', test: () => 'hello'.toUpperCase() === 'HELLO' },
 		{ name: 'Array Test', test: () => [1, 2, 3].length === 3 },
-		{ name: 'Extension Active', test: () => vscode.extensions.getExtension('spcr-test.joshbot')?.isActive === true }
+		{ name: 'Extension Active', test: () => vscode.extensions.getExtension(EXTENSION_ID)?.isActive === true }
 	];
 
 	let passed = 0;

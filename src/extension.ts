@@ -16,12 +16,15 @@ let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.Ch
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
-	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, context, stream, token) => {
-		if (context.chatSessionContext) {
-			const { isUntitled, chatSessionItem: original } = context.chatSessionContext;
+	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, chatContext, stream, token) => {
+		if (request.command) {
+			return await handleSlashCommand(request, context, stream, token);
+		}
+		if (chatContext.chatSessionContext) {
+			const { isUntitled, chatSessionItem: original } = chatContext.chatSessionContext;
 			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
 			if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
-				return handleConfirmationData(request, context, stream, token);
+				return handleConfirmationData(request, chatContext, stream, token);
 			}
 			if (isUntitled) {
 				/* Initial Untitled response */
@@ -90,6 +93,57 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.chat.registerChatSessionContentProvider(CHAT_SESSION_TYPE, sessionProvider, chatParticipant)
 	);
+}
+
+async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscode.ExtensionContext | undefined, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
+	if (!extContext) {
+		stream.warning('Extension context unavailable');
+		return;
+	}
+
+	const parts = request.prompt.trim().split(/\s+/);
+	const command = request.command;
+
+	switch (command) {
+		case 'set-secret': {
+			if (parts.length < 2) {
+				stream.warning('Usage: /set-secret <key> <value>');
+				return;
+			}
+			const key = parts[0];
+			const value = parts.slice(1).join(' ');
+			try {
+				await extContext.secrets.store(key, value);
+				stream.markdown(`Stored secret **${escapeMarkdown(key)}** (value hidden).`);
+			} catch (err: any) {
+				stream.warning(`Failed to store secret: ${err?.message ?? err}`);
+			}
+			return;
+		}
+		case 'secrets': {
+			try {
+				const keys = await extContext.secrets.keys();
+				if (keys.length === 0) {
+					stream.markdown('No secrets stored. Use /set-secret <key> <value> to add one.');
+				} else {
+					stream.markdown('Stored secret keys:\n');
+					for (const k of keys) {
+						stream.markdown(`- ${escapeMarkdown(k)}\n`);
+					}
+				}
+			} catch (err: any) {
+				stream.warning(`Failed to read secrets: ${err?.message ?? err}`);
+			}
+			return;
+		}
+		default:
+			stream.warning(`Unknown command: ${command}`);
+			return;
+	}
+}
+
+function escapeMarkdown(value: string): string {
+	return value.replace(/[\\`*_{}\[\]()#+\-.!]/g, '\\$&');
 }
 
 async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {

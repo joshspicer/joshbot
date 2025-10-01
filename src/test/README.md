@@ -24,7 +24,7 @@ This will:
 
 ## Writing Tests
 
-Tests use Mocha with the TDD interface. To add new tests:
+Tests use Mocha with the TDD interface (`ui: 'tdd'`), which provides `suite()` and `test()` functions. To add new tests:
 
 1. Create a new `.test.ts` file in the `suite/` directory
 2. Import required modules (assert, vscode, etc.)

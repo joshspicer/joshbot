@@ -61,10 +61,8 @@ This file provides **private/internal extensions** to the VS Code Chat API that 
 #### Usage in this extension:
 
 JoshBot uses this API to:
-- Create chat sessions with full history tracking using `ChatRequestTurn2` and `ChatResponseTurn2`
-- Track edited files during chat sessions via `ChatRequestEditedFileEvent`
-- Provide confirmation dialogs using `ChatErrorDetails.confirmationButtons`
-- Manage session lifecycle with `onDidDisposeChatSession`
+- Create mock chat session history using `ChatRequestTurn2` and `ChatResponseTurn2` for demonstration purposes
+- Handle confirmation dialogs through the chat response stream
 
 ### Other Proposed API Files:
 

@@ -11,10 +11,28 @@ const CHAT_SESSION_TYPE = 'josh-bot';
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
 
+/**
+ * Event emitter that signals VS Code when an untitled chat session should be replaced with a newly created session.
+ * 
+ * This emitter is used to notify the VS Code UI that a temporary/untitled session should be gracefully
+ * migrated to a permanent session. When fired, VS Code will:
+ * 1. Close the untitled session UI
+ * 2. Open the new permanent session UI
+ * 3. Preserve the user's context and conversation flow
+ * 
+ * The event payload contains:
+ * - `original`: The untitled ChatSessionItem that should be replaced
+ * - `modified`: The newly created permanent ChatSessionItem to replace it with
+ * 
+ * This is typically fired after the user confirms they want to create a new session from an untitled one.
+ * 
+ * @see ChatSessionItemProvider.onDidCommitChatSessionItem in vscode.proposed.chatSessionsProvider.d.ts
+ */
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
+	// Initialize the emitter that will notify VS Code when to replace untitled sessions with permanent ones
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, chatContext, stream, token) => {
 		if (request.command) {
@@ -45,6 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// Create session provider
 	const sessionProvider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
 		onDidChangeChatSessionItems = new vscode.EventEmitter<void>().event;
+		// Expose the event that VS Code will listen to for session replacement notifications
 		onDidCommitChatSessionItem: vscode.Event<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }> = onDidCommitChatSessionItemEmitter.event;
 		async provideChatSessionItems(token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
 			return [
@@ -193,7 +212,15 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
 		]
 	});
-	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
+	
+	/**
+	 * Fire the onDidCommitChatSessionItem event to tell VS Code to replace the untitled session with the new permanent session.
+	 * 
+	 * This triggers VS Code to:
+	 * - Close the untitled session UI
+	 * - Navigate the user to the newly created permanent session
+	 * - Update any references from the untitled session to the new session
+	 */
 	onDidCommitChatSessionItemEmitter.fire({ original, modified: newSessionItem });
 }
 

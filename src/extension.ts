@@ -33,7 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 			} else {
 				/* follow up */
-				stream.markdown(`Welcome back!`)
+				stream.markdown(`Welcome back!`);
 			}
 		} else {
 			/*general query*/

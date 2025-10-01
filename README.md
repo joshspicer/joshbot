@@ -22,7 +22,7 @@ This file provides **private/internal additions** to VS Code's chat participant 
    - Notebook (notebook inline chat)
    - Editor (code editor inline chat)
 
-2. **Extended ChatRequest interface** - Adds private properties to chat requests:
+2. **ChatRequest interface** - Extends the public ChatRequest with private properties:
    - `id`: Unique identifier for the chat request
    - `attempt`: The attempt number of the request
    - `sessionId`: Session identifier
@@ -75,7 +75,7 @@ npm install
 # Compile
 npm run compile
 
-# Watch mode
+# Watch mode for compilation
 npm run watch
 
 # Lint

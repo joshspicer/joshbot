@@ -172,7 +172,7 @@ For background tasks with problem matchers:
 
 **Solutions:**
 - Add debug output to see what the task actually prints
-- Test regex patterns using online tools like regex101.com
+- Test regex patterns using online tools like [regex101.com](https://regex101.com)
 - Simplify patterns to exact string matches first
 - Check if output is being buffered (add `flush` commands if using custom scripts)
 

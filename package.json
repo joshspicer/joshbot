@@ -130,9 +130,12 @@
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
     "@vscode/dts": "^0.4.1",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.6.0",
+    "eslint": "^9.36.0",
     "glob": "^11.0.3",
     "mocha": "^11.7.3",
     "typescript": "^5.8.0"

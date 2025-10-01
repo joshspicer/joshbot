@@ -121,6 +121,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
+    "test:unit": "npm run compile && mocha --config .mocharc.json",
     "package": "vsce package",
     "deploy": "vsce publish",
     "postinstall": "npm run downloadapi",

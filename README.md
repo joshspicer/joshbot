@@ -61,8 +61,8 @@ This file provides **private/internal extensions** to the VS Code Chat API that 
 #### Usage in this extension:
 
 JoshBot uses this API to:
-- Create mock chat session history using `ChatRequestTurn2` and `ChatResponseTurn2` for demonstration purposes
-- Handle confirmation dialogs through the chat response stream
+- Create predefined demo sessions with hardcoded request/response pairs using `ChatRequestTurn2` and `ChatResponseTurn2`
+- Handle user confirmations for creating new chat sessions using the confirmation step mechanism
 
 ### Other Proposed API Files:
 

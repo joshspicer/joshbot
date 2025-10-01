@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
+import { escapeMarkdown } from '../../utils';
 
 suite('Utility Function Tests', () => {
 	
@@ -17,13 +18,6 @@ suite('Utility Function Tests', () => {
 			{ input: '{object}', expected: '\\{object\\}' },
 			{ input: 'plain text', expected: 'plain text' }
 		];
-
-		// Note: We can't directly import escapeMarkdown since it's not exported
-		// This test demonstrates the expected behavior
-		// If needed, the function could be exported for testing
-		const escapeMarkdown = (value: string): string => {
-			return value.replace(/[\\`*_{}\[\]()#+\-.!]/g, '\\$&');
-		};
 
 		testCases.forEach(({ input, expected }) => {
 			const result = escapeMarkdown(input);

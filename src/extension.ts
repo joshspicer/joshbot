@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import { escapeMarkdown } from './utils';
 
 const CHAT_SESSION_TYPE = 'josh-bot';
 
@@ -142,9 +143,7 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 	}
 }
 
-function escapeMarkdown(value: string): string {
-	return value.replace(/[\\`*_{}\[\]()#+\-.!]/g, '\\$&');
-}
+
 
 async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
 	const results: Array<{ step: string; accepted: boolean }> = [];

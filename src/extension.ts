@@ -207,11 +207,11 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
-		requestHandler: undefined,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`\n\nHello from ${sessionId}`);
-		// 	return {};
-		// }
+		requestHandler: async (request, context, stream, token) => {
+			stream.markdown(`Hello from ${sessionId}! You said: "${request.prompt}"\n\n`);
+			stream.markdown(`This is a completed session, but you can still interact with me here.`);
+			return {};
+		}
 	};
 }
 
@@ -231,11 +231,13 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`4!\n`);
 		},
-		requestHandler: undefined,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`Hello from ${sessionId}`);
-		// 	return {};
-		// }
+		requestHandler: async (request, context, stream, token) => {
+			stream.markdown(`Processing your request from ${sessionId}: "${request.prompt}"\n\n`);
+			stream.progress(`Working on it...`);
+			await new Promise(resolve => setTimeout(resolve, 2000));
+			stream.markdown(`This session is still in progress. Your request has been noted!`);
+			return {};
+		}
 	};
 }
 
@@ -249,11 +251,12 @@ function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 			new vscode.ChatRequestTurn2('Howdy', undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
-		requestHandler: undefined,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`\n\nHello from ${sessionId}`);
-		// 	return {};
-		// }
+		requestHandler: async (request, context, stream, token) => {
+			stream.markdown(`Welcome to your untitled session (${sessionId})!\n\n`);
+			stream.markdown(`You said: "${request.prompt}"\n\n`);
+			stream.markdown(`I'm JoshBot, ready to assist you. Feel free to ask me anything!`);
+			return {};
+		}
 	};
 }
 

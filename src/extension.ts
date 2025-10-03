@@ -35,7 +35,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 			} else {
 				/* follow up */
-				stream.markdown(`Welcome back!`)
+				stream.markdown(`Welcome back! What would you like to do today?\n\n`);
+				stream.confirmation('Delete Session', `Would you like to delete this session?\n\n`, { step: 'delete', sessionId: original.id }, ['Delete', 'Cancel']);
+				stream.confirmation('Rename Session', `Would you like to rename this session?\n\n`, { step: 'rename', sessionId: original.id, currentLabel: original.label }, ['Rename', 'Cancel']);
+				stream.confirmation('Export Session', `Would you like to export this session data?\n\n`, { step: 'export', sessionId: original.id }, ['Export', 'Cancel']);
+				stream.confirmation('Clear History', `Would you like to clear the chat history for this session?\n\n`, { step: 'clearHistory', sessionId: original.id }, ['Clear', 'Cancel']);
 			}
 		} else {
 			/*general query*/
@@ -149,16 +153,28 @@ function escapeMarkdown(value: string): string {
 }
 
 async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
-	const results: Array<{ step: string; accepted: boolean }> = [];
-	results.push(...(request.acceptedConfirmationData?.map(data => ({ step: data.step, accepted: true })) ?? []));
-	results.push(...((request.rejectedConfirmationData ?? []).filter(data => !results.some(r => r.step === data.step)).map(data => ({ step: data.step, accepted: false }))));
-	for (const data of results) {
-		switch (data.step) {
+	const results: Array<{ step: string; accepted: boolean; data: any }> = [];
+	results.push(...(request.acceptedConfirmationData?.map(data => ({ step: data.step, accepted: true, data })) ?? []));
+	results.push(...((request.rejectedConfirmationData ?? []).filter(data => !results.some(r => r.step === data.step)).map(data => ({ step: data.step, accepted: false, data }))));
+	for (const result of results) {
+		switch (result.step) {
 			case 'create':
-				await handleCreation(data.accepted, request, context, stream);
+				await handleCreation(result.accepted, request, context, stream);
+				break;
+			case 'delete':
+				await handleDeletion(result.accepted, result.data, context, stream);
+				break;
+			case 'rename':
+				await handleRename(result.accepted, result.data, request, context, stream);
+				break;
+			case 'export':
+				await handleExport(result.accepted, result.data, context, stream);
+				break;
+			case 'clearHistory':
+				await handleClearHistory(result.accepted, result.data, context, stream);
 				break;
 			default:
-				stream.markdown(`Unknown confirmation step: ${data.step}\n\n`);
+				stream.markdown(`Unknown confirmation step: ${result.step}\n\n`);
 				break;
 		}
 	}
@@ -197,6 +213,141 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	});
 	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
 	onDidCommitChatSessionItemEmitter.fire({ original, modified: newSessionItem });
+}
+
+async function handleDeletion(accepted: boolean, data: any, context: vscode.ChatContext, stream: vscode.ChatResponseStream): Promise<void> {
+	if (!accepted) {
+		stream.markdown(`Session deletion cancelled.\n\n`);
+		return;
+	}
+
+	const sessionId = data.sessionId;
+	if (!sessionId) {
+		stream.warning(`Cannot delete session - no session ID provided.\n\n`);
+		return;
+	}
+
+	stream.progress(`Deleting session ${escapeMarkdown(sessionId)}...\n\n`);
+	await new Promise(resolve => setTimeout(resolve, 2000));
+
+	// Find and remove the session from our collections
+	const index = _sessionItems.findIndex(item => item.id === sessionId);
+	if (index !== -1) {
+		_sessionItems.splice(index, 1);
+		_chatSessions.delete(sessionId);
+		stream.markdown(`✅ Session **${escapeMarkdown(sessionId)}** has been deleted successfully.\n\n`);
+	} else {
+		stream.warning(`Session **${escapeMarkdown(sessionId)}** not found in dynamic sessions.\n\n`);
+	}
+}
+
+async function handleRename(accepted: boolean, data: any, request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream): Promise<void> {
+	if (!accepted) {
+		stream.markdown(`Session rename cancelled.\n\n`);
+		return;
+	}
+
+	const sessionId = data.sessionId;
+	const currentLabel = data.currentLabel || 'Unknown';
+	
+	if (!sessionId) {
+		stream.warning(`Cannot rename session - no session ID provided.\n\n`);
+		return;
+	}
+
+	// Extract the new name from the user's prompt
+	const promptText = request.prompt.trim();
+	let newName = promptText;
+	
+	// If no specific name provided, generate a default one
+	if (!newName || newName.length === 0) {
+		const timestamp = new Date().toLocaleString();
+		newName = `JoshBot Session - ${timestamp}`;
+	}
+
+	stream.progress(`Renaming session...\n\n`);
+	await new Promise(resolve => setTimeout(resolve, 1500));
+
+	// Find and update the session
+	const sessionItem = _sessionItems.find(item => item.id === sessionId);
+	if (sessionItem) {
+		const oldLabel = sessionItem.label;
+		sessionItem.label = newName;
+		stream.markdown(`✅ Session renamed from **${escapeMarkdown(oldLabel)}** to **${escapeMarkdown(newName)}**\n\n`);
+		
+		// Notify VS Code about the change
+		onDidCommitChatSessionItemEmitter.fire({ original: { ...sessionItem, label: oldLabel }, modified: sessionItem });
+	} else {
+		stream.warning(`Session **${escapeMarkdown(sessionId)}** not found in dynamic sessions.\n\n`);
+	}
+}
+
+async function handleExport(accepted: boolean, data: any, context: vscode.ChatContext, stream: vscode.ChatResponseStream): Promise<void> {
+	if (!accepted) {
+		stream.markdown(`Session export cancelled.\n\n`);
+		return;
+	}
+
+	const sessionId = data.sessionId;
+	if (!sessionId) {
+		stream.warning(`Cannot export session - no session ID provided.\n\n`);
+		return;
+	}
+
+	stream.progress(`Exporting session ${escapeMarkdown(sessionId)}...\n\n`);
+	await new Promise(resolve => setTimeout(resolve, 2000));
+
+	// Get the session data
+	const session = _chatSessions.get(sessionId);
+	const sessionItem = _sessionItems.find(item => item.id === sessionId);
+	
+	if (session || sessionItem) {
+		stream.markdown(`### 📦 Session Export\n\n`);
+		stream.markdown(`**Session ID:** ${escapeMarkdown(sessionId)}\n\n`);
+		
+		if (sessionItem) {
+			stream.markdown(`**Label:** ${escapeMarkdown(sessionItem.label)}\n\n`);
+			stream.markdown(`**Status:** ${sessionItem.status === vscode.ChatSessionStatus.Completed ? 'Completed' : sessionItem.status === vscode.ChatSessionStatus.InProgress ? 'In Progress' : 'Failed'}\n\n`);
+		}
+		
+		if (session && session.history) {
+			stream.markdown(`**History entries:** ${session.history.length}\n\n`);
+			stream.markdown(`\`\`\`json\n${JSON.stringify({ sessionId, label: sessionItem?.label, historyCount: session.history.length }, null, 2)}\n\`\`\`\n\n`);
+		}
+		
+		stream.markdown(`✅ Session data exported successfully.\n\n`);
+	} else {
+		stream.warning(`Session **${escapeMarkdown(sessionId)}** not found.\n\n`);
+	}
+}
+
+async function handleClearHistory(accepted: boolean, data: any, context: vscode.ChatContext, stream: vscode.ChatResponseStream): Promise<void> {
+	if (!accepted) {
+		stream.markdown(`Clear history cancelled.\n\n`);
+		return;
+	}
+
+	const sessionId = data.sessionId;
+	if (!sessionId) {
+		stream.warning(`Cannot clear history - no session ID provided.\n\n`);
+		return;
+	}
+
+	stream.progress(`Clearing history for session ${escapeMarkdown(sessionId)}...\n\n`);
+	await new Promise(resolve => setTimeout(resolve, 1500));
+
+	// Clear the session history by creating a new session with empty history
+	const oldSession = _chatSessions.get(sessionId);
+	if (oldSession) {
+		// Replace the session with a new one that has empty history
+		_chatSessions.set(sessionId, {
+			requestHandler: oldSession.requestHandler,
+			history: []
+		});
+		stream.markdown(`✅ Chat history cleared for session **${escapeMarkdown(sessionId)}**. Starting fresh!\n\n`);
+	} else {
+		stream.warning(`Session **${escapeMarkdown(sessionId)}** not found in dynamic sessions.\n\n`);
+	}
 }
 
 

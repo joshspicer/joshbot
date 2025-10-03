@@ -7,7 +7,6 @@ import * as vscode from 'vscode';
 
 const CHAT_SESSION_TYPE = 'josh-bot';
 
-// Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
 
@@ -24,27 +23,21 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		if (chatContext.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = chatContext.chatSessionContext;
-			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
 			if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 				return handleConfirmationData(request, chatContext, stream, token);
 			}
 			if (isUntitled) {
-				/* Initial Untitled response */
 				stream.confirmation('New Chat Session', `Would you like to begin?\n\n`, { step: 'create' }, ['yes', 'no']);
 				return;
-
 			} else {
-				/* follow up */
 				stream.markdown(`Welcome back!`)
 			}
 		} else {
-			/*general query*/
 			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
 		}
 	});
 	context.subscriptions.push(chatParticipant);
 
-	// Create session provider
 	const sessionProvider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
 		onDidChangeChatSessionItems = new vscode.EventEmitter<void>().event;
 		onDidCommitChatSessionItem: vscode.Event<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }> = onDidCommitChatSessionItemEmitter.event;
@@ -80,14 +73,9 @@ export function activate(context: vscode.ExtensionContext) {
 					if (existing) {
 						return existing;
 					}
-					// Guess this is an untitled session. Play along.
 					return untitledChatSessionContent(sessionId);
 			}
 		}
-
-		// provideNewChatSessionItem(options: { readonly request: vscode.ChatRequest; metadata?: any; }, token: vscode.CancellationToken): vscode.ProviderResult<vscode.ChatSessionItem> {
-		// 	throw new Error('Method not implemented.');
-		// }
 	};
 	context.subscriptions.push(
 		vscode.chat.registerChatSessionItemProvider(CHAT_SESSION_TYPE, sessionProvider)
@@ -195,10 +183,8 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
 		]
 	});
-	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
 	onDidCommitChatSessionItemEmitter.fire({ original, modified: newSessionItem });
 }
-
 
 function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
@@ -209,11 +195,7 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
-		requestHandler: undefined,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`\n\nHello from ${sessionId}`);
-		// 	return {};
-		// }
+		requestHandler: undefined
 	};
 }
 
@@ -233,11 +215,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`4!\n`);
 		},
-		requestHandler: undefined,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`Hello from ${sessionId}`);
-		// 	return {};
-		// }
+		requestHandler: undefined
 	};
 }
 
@@ -251,14 +229,8 @@ function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 			new vscode.ChatRequestTurn2('Howdy', undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
-		requestHandler: undefined,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`\n\nHello from ${sessionId}`);
-		// 	return {};
-		// }
+		requestHandler: undefined
 	};
 }
 
-export function deactivate() {
-	// Cleanup when extension is deactivated
-}
+export function deactivate() {}

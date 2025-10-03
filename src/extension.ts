@@ -56,7 +56,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('joshbot.cloudButton', () => {
 			vscode.window.showInformationMessage('Cloud button clicked!');
-			return { success: true };
 		})
 	);
 

@@ -265,12 +265,8 @@ async function handleRename(accepted: boolean, data: any, request: vscode.ChatRe
 	// Find and update the session
 	const sessionItem = _sessionItems.find(item => item.id === sessionId);
 	if (sessionItem) {
-		// Create a proper copy of the original state before modification
-		const originalItem: vscode.ChatSessionItem = {
-			id: sessionItem.id,
-			label: sessionItem.label,
-			status: sessionItem.status
-		};
+		// Create a copy of the original state before modification
+		const originalItem: vscode.ChatSessionItem = { ...sessionItem };
 		
 		sessionItem.label = newName;
 		stream.markdown(`✅ Session renamed from **${escapeMarkdown(originalItem.label)}** to **${escapeMarkdown(newName)}**\n\n`);

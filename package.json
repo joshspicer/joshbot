@@ -59,7 +59,10 @@
               "name": "set-secret",
               "description": "Store a secret: /set-secret <key> <value>"
             }
-        ]
+        ],
+        "capabilities": {
+          "supportsFileAttachments": true
+        }
       }
     ],
     "commands": [

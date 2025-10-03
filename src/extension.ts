@@ -17,6 +17,8 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, chatContext, stream, token) => {
+		console.log(`chatUserPromptSummary: ${chatContext?.chatSummary?.prompt}`);
+		console.log(`chatHistorySummary: ${chatContext?.chatSummary?.history}`);
 		if (request.command) {
 			return await handleSlashCommand(request, context, stream, token);
 		}

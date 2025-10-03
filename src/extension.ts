@@ -255,15 +255,9 @@ async function handleRename(accepted: boolean, data: any, request: vscode.ChatRe
 		return;
 	}
 
-	// Extract the new name from the user's prompt
-	const promptText = request.prompt.trim();
-	let newName = promptText;
-	
-	// If no specific name provided, generate a default one
-	if (!newName || newName.length === 0) {
-		const timestamp = new Date().toLocaleString();
-		newName = `JoshBot Session - ${timestamp}`;
-	}
+	// Generate a new name with timestamp
+	const timestamp = new Date().toLocaleString();
+	const newName = `JoshBot Session - ${timestamp}`;
 
 	stream.progress(`Renaming session...\n\n`);
 	await new Promise(resolve => setTimeout(resolve, 1500));
@@ -271,12 +265,18 @@ async function handleRename(accepted: boolean, data: any, request: vscode.ChatRe
 	// Find and update the session
 	const sessionItem = _sessionItems.find(item => item.id === sessionId);
 	if (sessionItem) {
-		const oldLabel = sessionItem.label;
+		// Create a proper copy of the original state before modification
+		const originalItem: vscode.ChatSessionItem = {
+			id: sessionItem.id,
+			label: sessionItem.label,
+			status: sessionItem.status
+		};
+		
 		sessionItem.label = newName;
-		stream.markdown(`✅ Session renamed from **${escapeMarkdown(oldLabel)}** to **${escapeMarkdown(newName)}**\n\n`);
+		stream.markdown(`✅ Session renamed from **${escapeMarkdown(originalItem.label)}** to **${escapeMarkdown(newName)}**\n\n`);
 		
 		// Notify VS Code about the change
-		onDidCommitChatSessionItemEmitter.fire({ original: { ...sessionItem, label: oldLabel }, modified: sessionItem });
+		onDidCommitChatSessionItemEmitter.fire({ original: originalItem, modified: sessionItem });
 	} else {
 		stream.warning(`Session **${escapeMarkdown(sessionId)}** not found in dynamic sessions.\n\n`);
 	}

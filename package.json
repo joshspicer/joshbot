@@ -58,6 +58,10 @@
             {
               "name": "set-secret",
               "description": "Store a secret: /set-secret <key> <value>"
+            },
+            {
+              "name": "debug",
+              "description": "Toggle debug mode or view debug status"
             }
         ],
         "capabilities": {
@@ -101,6 +105,11 @@
           "type": "boolean",
           "default": true,
           "description": "Enable to contribute a cloud button for Josh Bot."
+        },
+        "joshbot.debugMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug mode for verbose logging."
         }
       }
     },

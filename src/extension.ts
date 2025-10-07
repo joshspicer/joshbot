@@ -13,32 +13,53 @@ const _chatSessions: Map<string, vscode.ChatSession> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
+// Debug mode utilities
+function isDebugMode(): boolean {
+	return vscode.workspace.getConfiguration('joshbot').get<boolean>('debugMode', false);
+}
+
+function debugLog(message: string, ...args: any[]): void {
+	if (isDebugMode()) {
+		console.log(`[JoshBot Debug] ${message}`, ...args);
+	}
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
+	debugLog('Extension activated with debug mode enabled');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, chatContext, stream, token) => {
+		debugLog(`Processing request with prompt: ${request.prompt}`);
+		debugLog(`chatUserPromptSummary: ${chatContext?.chatSummary?.prompt}`);
+		debugLog(`chatHistorySummary: ${chatContext?.chatSummary?.history}`);
 		console.log(`chatUserPromptSummary: ${chatContext?.chatSummary?.prompt}`);
 		console.log(`chatHistorySummary: ${chatContext?.chatSummary?.history}`);
 		if (request.command) {
+			debugLog(`Handling slash command: ${request.command}`);
 			return await handleSlashCommand(request, context, stream, token);
 		}
 		if (chatContext.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = chatContext.chatSessionContext;
+			debugLog(`Chat session context - ID: ${original.id}, isUntitled: ${isUntitled}`);
 			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
 			if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
+				debugLog('Handling confirmation data');
 				return handleConfirmationData(request, chatContext, stream, token);
 			}
 			if (isUntitled) {
 				/* Initial Untitled response */
+				debugLog('Showing confirmation for new untitled session');
 				stream.confirmation('New Chat Session', `Would you like to begin?\n\n`, { step: 'create' }, ['yes', 'no']);
 				return;
 
 			} else {
 				/* follow up */
+				debugLog('Processing follow-up message in existing session');
 				stream.markdown(`Welcome back!`)
 			}
 		} else {
 			/*general query*/
+			debugLog('Processing general query without session context');
 			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
 		}
 	});
@@ -69,6 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
 			];
 		}
 		async provideChatSessionContent(sessionId: string, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
+			debugLog(`Providing chat session content for: ${sessionId}`);
 			switch (sessionId) {
 				case 'demo-session-01':
 				case 'demo-session-02':
@@ -78,9 +100,11 @@ export function activate(context: vscode.ExtensionContext) {
 				default:
 					const existing = _chatSessions.get(sessionId);
 					if (existing) {
+						debugLog(`Returning existing session: ${sessionId}`);
 						return existing;
 					}
 					// Guess this is an untitled session. Play along.
+					debugLog(`Creating untitled session: ${sessionId}`);
 					return untitledChatSessionContent(sessionId);
 			}
 		}
@@ -138,6 +162,29 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 			}
 			return;
 		}
+		case 'debug': {
+			const config = vscode.workspace.getConfiguration('joshbot');
+			const currentDebugMode = config.get<boolean>('debugMode', false);
+			
+			if (parts.length > 0) {
+				const action = parts[0].toLowerCase();
+				if (action === 'on' || action === 'enable' || action === 'true') {
+					await config.update('debugMode', true, vscode.ConfigurationTarget.Global);
+					stream.markdown('✅ Debug mode **enabled**. Verbose logging is now active.');
+					debugLog('Debug mode enabled via /debug command');
+				} else if (action === 'off' || action === 'disable' || action === 'false') {
+					await config.update('debugMode', false, vscode.ConfigurationTarget.Global);
+					stream.markdown('❌ Debug mode **disabled**. Verbose logging is now inactive.');
+				} else {
+					stream.warning('Usage: /debug [on|off|enable|disable]\nOr use /debug to view current status.');
+				}
+			} else {
+				// Show current status
+				const status = currentDebugMode ? '**enabled** ✅' : '**disabled** ❌';
+				stream.markdown(`Debug mode is currently ${status}\n\nUse \`/debug on\` to enable or \`/debug off\` to disable.`);
+			}
+			return;
+		}
 		default:
 			stream.warning(`Unknown command: ${command}`);
 			return;
@@ -152,7 +199,9 @@ async function handleConfirmationData(request: vscode.ChatRequest, context: vsco
 	const results: Array<{ step: string; accepted: boolean }> = [];
 	results.push(...(request.acceptedConfirmationData?.map(data => ({ step: data.step, accepted: true })) ?? []));
 	results.push(...((request.rejectedConfirmationData ?? []).filter(data => !results.some(r => r.step === data.step)).map(data => ({ step: data.step, accepted: false }))));
+	debugLog(`Processing ${results.length} confirmation result(s)`);
 	for (const data of results) {
+		debugLog(`Confirmation step: ${data.step}, accepted: ${data.accepted}`);
 		switch (data.step) {
 			case 'create':
 				await handleCreation(data.accepted, request, context, stream);
@@ -165,23 +214,28 @@ async function handleConfirmationData(request: vscode.ChatRequest, context: vsco
 }
 
 async function handleCreation(accepted: boolean, request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream): Promise<void> {
+	debugLog(`handleCreation called with accepted: ${accepted}`);
 	if (!accepted) {
+		debugLog('Session creation rejected by user');
 		stream.warning(`New session was not created.\n\n`);
 		return;
 	}
 
 	const original = context.chatSessionContext?.chatSessionItem;
 	if (!original || !context.chatSessionContext?.isUntitled) {
+		debugLog('Cannot create session - not an untitled session');
 		stream.warning(`Cannot create new session - this is not an untitled session!.\n\n`);
 		return;
 	}
 
+	debugLog('Creating new session...');
 	stream.progress(`Creating new session...\n\n`);
 	await new Promise(resolve => setTimeout(resolve, 3000));
 
 	/* Exchange this untitled session for a 'real' session */
 	const count = _sessionItems.length + 1;
 	const newSessionId = `session-${count}`;
+	debugLog(`New session ID: ${newSessionId}`);
 	const newSessionItem: vscode.ChatSessionItem = {
 		id: newSessionId,
 		label: `JoshBot Session ${count}`,
@@ -196,6 +250,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 		]
 	});
 	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
+	debugLog(`Committing session ${newSessionId}`);
 	onDidCommitChatSessionItemEmitter.fire({ original, modified: newSessionItem });
 }
 

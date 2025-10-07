@@ -189,7 +189,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 		id: newSessionId,
 		label: `JoshBot Session ${count}`,
 		status: vscode.ChatSessionStatus.Completed,
-		iconPath: new vscode.ThemeIcon('comment-discussion')
+		iconPath: new vscode.ThemeIcon('check')
 	};
 	_sessionItems.push(newSessionItem);
 	_chatSessions.set(newSessionId, {

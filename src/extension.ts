@@ -66,7 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
 					id: 'demo-session-03',
 					label: 'JoshBot Demo Session 03',
 					status: vscode.ChatSessionStatus.InProgress,
-					iconPath: new vscode.ThemeIcon('loading~spin')
+					iconPath: new vscode.ThemeIcon('sync~spin')
 				},
 				..._sessionItems,
 			];

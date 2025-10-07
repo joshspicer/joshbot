@@ -24,7 +24,6 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		if (chatContext.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = chatContext.chatSessionContext;
-			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
 			if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 				return handleConfirmationData(request, chatContext, stream, token);
 			}
@@ -84,10 +83,6 @@ export function activate(context: vscode.ExtensionContext) {
 					return untitledChatSessionContent(sessionId);
 			}
 		}
-
-		// provideNewChatSessionItem(options: { readonly request: vscode.ChatRequest; metadata?: any; }, token: vscode.CancellationToken): vscode.ProviderResult<vscode.ChatSessionItem> {
-		// 	throw new Error('Method not implemented.');
-		// }
 	};
 	context.subscriptions.push(
 		vscode.chat.registerChatSessionItemProvider(CHAT_SESSION_TYPE, sessionProvider)
@@ -209,11 +204,7 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
-		requestHandler: undefined,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`\n\nHello from ${sessionId}`);
-		// 	return {};
-		// }
+		requestHandler: undefined
 	};
 }
 
@@ -233,11 +224,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`4!\n`);
 		},
-		requestHandler: undefined,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`Hello from ${sessionId}`);
-		// 	return {};
-		// }
+		requestHandler: undefined
 	};
 }
 
@@ -251,11 +238,7 @@ function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 			new vscode.ChatRequestTurn2('Howdy', undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
-		requestHandler: undefined,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`\n\nHello from ${sessionId}`);
-		// 	return {};
-		// }
+		requestHandler: undefined
 	};
 }
 

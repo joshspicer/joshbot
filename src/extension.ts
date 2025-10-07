@@ -173,6 +173,7 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 					stream.markdown('✅ Debug mode **enabled**. Verbose logging is now active.');
 					debugLog('Debug mode enabled via /debug command');
 				} else if (action === 'off' || action === 'disable' || action === 'false') {
+					debugLog('Debug mode disabled via /debug command');
 					await config.update('debugMode', false, vscode.ConfigurationTarget.Global);
 					stream.markdown('❌ Debug mode **disabled**. Verbose logging is now inactive.');
 				} else {

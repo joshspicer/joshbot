@@ -53,17 +53,20 @@ export function activate(context: vscode.ExtensionContext) {
 				{
 					id: 'demo-session-01',
 					label: 'JoshBot Demo Session 01',
-					status: vscode.ChatSessionStatus.Completed
+					status: vscode.ChatSessionStatus.Completed,
+					iconPath: new vscode.ThemeIcon('check')
 				},
 				{
 					id: 'demo-session-02',
 					label: 'JoshBot Demo Session 02',
-					status: vscode.ChatSessionStatus.Completed
+					status: vscode.ChatSessionStatus.Completed,
+					iconPath: new vscode.ThemeIcon('check')
 				},
 				{
 					id: 'demo-session-03',
 					label: 'JoshBot Demo Session 03',
-					status: vscode.ChatSessionStatus.InProgress
+					status: vscode.ChatSessionStatus.InProgress,
+					iconPath: new vscode.ThemeIcon('sync')
 				},
 				..._sessionItems,
 			];
@@ -185,7 +188,8 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	const newSessionItem: vscode.ChatSessionItem = {
 		id: newSessionId,
 		label: `JoshBot Session ${count}`,
-		status: vscode.ChatSessionStatus.Completed
+		status: vscode.ChatSessionStatus.Completed,
+		iconPath: new vscode.ThemeIcon('comment-discussion')
 	};
 	_sessionItems.push(newSessionItem);
 	_chatSessions.set(newSessionId, {

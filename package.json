@@ -1,8 +1,8 @@
 {
   "name": "joshbot",
-  "displayName": "Josh Bot",
-  "description": "A dedicated coding assistant great at complex tasks",
-  "version": "1.3.0",
+  "displayName": "Josh Bot 2",
+  "description": "A dedicated coding assistant great at complex tasks - Version 2",
+  "version": "2.0.0",
   "publisher": "spcr-test",
   "license": "MIT",
   "engines": {
@@ -24,7 +24,7 @@
     "workspace"
   ],
   "activationEvents": [
-    "onChatSession:josh-bot",
+    "onChatSession:josh-bot-2",
     "*"
   ],
   "capabilities": {
@@ -36,19 +36,19 @@
   "contributes": {
     "remoteCodingAgents": [
       {
-        "id": "josh-bot",
-        "name": "Josh Bot",
-        "displayName": "Josh Bot",
+        "id": "josh-bot-2",
+        "name": "Josh Bot 2",
+        "displayName": "Josh Bot 2",
         "command": "joshbot.cloudButton",
         "when": "config.joshbot.contributeCloudButton"
       }
     ],
     "chatSessions": [
       {
-        "type": "josh-bot",
-        "name": "joshbot",
-        "displayName": "Josh Bot",
-        "description": "A dedicated coding assistant great at complex tasks",
+        "type": "josh-bot-2",
+        "name": "joshbot2",
+        "displayName": "Josh Bot 2",
+        "description": "A dedicated coding assistant great at complex tasks - Version 2",
         "when": "config.joshbot.contributeChatSessions",
         "commands": [
           {
@@ -108,11 +108,11 @@
       "chat/multiDiff/context": [
         {
           "command": "joshbot.squirrel",
-          "when": "chatSessionType == josh-bot"
+          "when": "chatSessionType == josh-bot-2"
         },
         {
           "command": "joshbot.snake",
-          "when": "chatSessionType == josh-bot"
+          "when": "chatSessionType == josh-bot-2"
         }
       ]
     }

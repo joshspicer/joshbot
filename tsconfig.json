@@ -11,7 +11,9 @@
 		"alwaysStrict": true,
 		"noImplicitAny": true,
 		"noImplicitReturns": true,
-		"experimentalDecorators": true
+		"experimentalDecorators": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true
 	},
 	"include": ["src/**/*", "vscode.d.ts", "vscode.proposed.*"]
 }

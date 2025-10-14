@@ -94,18 +94,19 @@ export function activate(context: vscode.ExtensionContext) {
 		provideHandleOptionsChange(sessionId: string, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): void {
 			console.log(`provideHandleOptionsChange called for session ${sessionId}`);
 			
-			// Get or initialize options for this session
-			let options = _sessionOptions.get(sessionId);
-			if (!options) {
-				options = {};
-				_sessionOptions.set(sessionId, options);
-			}
+			// Get or initialize options for this session using the helper
+			const options = getSessionOptions(sessionId);
 
 			// Process all updates
 			for (const update of updates) {
 				console.log(`  Option '${update.optionId}' changed to: ${update.value}`);
 				if (update.optionId === 'model') {
-					options.model = update.value;
+					// When value is undefined, the option should be cleared
+					if (update.value === undefined) {
+						delete options.model;
+					} else {
+						options.model = update.value;
+					}
 				}
 				// Handle other option types here if needed in the future
 			}

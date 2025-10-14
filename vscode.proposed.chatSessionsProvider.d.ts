@@ -156,6 +156,26 @@ declare module 'vscode' {
 		// TODO: Should we introduce our own type for `ChatRequestHandler` since not all field apply to chat sessions?
 		// TODO: Revisit this to align with code.
 		readonly requestHandler: ChatRequestHandler | undefined;
+
+		/**
+		 * The current options for the session, including the selected model.
+		 */
+		readonly options?: ChatSessionOptions;
+	}
+
+	/**
+	 * Options for a chat session, including the selected model and other configuration.
+	 */
+	export interface ChatSessionOptions {
+		/**
+		 * The language model being used for this session.
+		 */
+		model?: LanguageModelChat;
+
+		/**
+		 * Additional model-specific options.
+		 */
+		modelOptions?: { [name: string]: any };
 	}
 
 	export interface ChatSessionContentProvider {
@@ -166,6 +186,15 @@ declare module 'vscode' {
 		 * @param token A cancellation token that can be used to cancel the operation.
 		 */
 		provideChatSessionContent(sessionId: string, token: CancellationToken): Thenable<ChatSession> | ChatSession;
+
+		/**
+		 * Handles changes to session options such as the selected model.
+		 *
+		 * @param sessionId The id of the chat session whose options are changing.
+		 * @param options The new options for the session.
+		 * @param token A cancellation token that can be used to cancel the operation.
+		 */
+		provideHandleOptionsChange?(sessionId: string, options: ChatSessionOptions, token: CancellationToken): Thenable<void> | void;
 	}
 
 	export namespace chat {

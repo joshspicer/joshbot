@@ -10,6 +10,7 @@ const CHAT_SESSION_TYPE = 'josh-bot';
 // Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
+const _sessionOptions: Map<string, vscode.ChatSessionOptions> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
@@ -83,6 +84,20 @@ export function activate(context: vscode.ExtensionContext) {
 					// Guess this is an untitled session. Play along.
 					return untitledChatSessionContent(sessionId);
 			}
+		}
+
+		async provideHandleOptionsChange(sessionId: string, options: vscode.ChatSessionOptions, token: vscode.CancellationToken): Promise<void> {
+			// Store the new options for this session
+			_sessionOptions.set(sessionId, options);
+			
+			// Log the model change for debugging
+			if (options.model) {
+				console.log(`Session ${sessionId} model changed to: ${options.model.id} (${options.model.family})`);
+			}
+			
+			// Note: The session object will retrieve the new options from _sessionOptions Map
+			// on the next call to provideChatSessionContent. We don't update _chatSessions
+			// directly to avoid losing object identity and potential side effects.
 		}
 
 		// provideNewChatSessionItem(options: { readonly request: vscode.ChatRequest; metadata?: any; }, token: vscode.CancellationToken): vscode.ProviderResult<vscode.ChatSessionItem> {
@@ -188,12 +203,22 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 		status: vscode.ChatSessionStatus.Completed
 	};
 	_sessionItems.push(newSessionItem);
+	
+	// Transfer options from the untitled session to the new session
+	const untitledOptions = _sessionOptions.get(original.id);
+	if (untitledOptions) {
+		_sessionOptions.set(newSessionId, untitledOptions);
+		// Clean up the untitled session options to avoid memory leaks
+		_sessionOptions.delete(original.id);
+	}
+	
 	_chatSessions.set(newSessionId, {
 		requestHandler: undefined,
 		history: [
 			new vscode.ChatRequestTurn2('Create a new session', undefined, [], 'joshbot', [], []),
 			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
-		]
+		],
+		options: untitledOptions
 	});
 	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
 	onDidCommitChatSessionItemEmitter.fire({ original, modified: newSessionItem });
@@ -204,12 +229,17 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
+	
+	// Get stored options for this session, if any
+	const options = _sessionOptions.get(sessionId);
+	
 	return {
 		history: [
 			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
+		options: options,
 		// requestHandler: async (request, context, stream, token) => {
 		// 	stream.markdown(`\n\nHello from ${sessionId}`);
 		// 	return {};
@@ -221,6 +251,10 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
+	
+	// Get stored options for this session, if any
+	const options = _sessionOptions.get(sessionId);
+	
 	return {
 		history: [
 			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
@@ -234,6 +268,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			stream.markdown(`4!\n`);
 		},
 		requestHandler: undefined,
+		options: options,
 		// requestHandler: async (request, context, stream, token) => {
 		// 	stream.markdown(`Hello from ${sessionId}`);
 		// 	return {};
@@ -246,12 +281,17 @@ function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n\n`));
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`This is an untitled session. Send a message to begin our session.\n`));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
+	
+	// Get stored options for this session, if any
+	const options = _sessionOptions.get(sessionId);
+	
 	return {
 		history: [
 			new vscode.ChatRequestTurn2('Howdy', undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
+		options: options,
 		// requestHandler: async (request, context, stream, token) => {
 		// 	stream.markdown(`\n\nHello from ${sessionId}`);
 		// 	return {};

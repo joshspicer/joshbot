@@ -95,15 +95,8 @@ export function activate(context: vscode.ExtensionContext) {
 				console.log(`Session ${sessionId} model changed to: ${options.model.id} (${options.model.family})`);
 			}
 			
-			// Update the existing session with new options if it exists
-			const existingSession = _chatSessions.get(sessionId);
-			if (existingSession) {
-				// Create an updated session with new options
-				_chatSessions.set(sessionId, {
-					...existingSession,
-					options: options
-				});
-			}
+			// Note: The session object will pick up the new options on the next call to provideChatSessionContent
+			// We don't update _chatSessions directly to avoid losing object identity
 		}
 
 		// provideNewChatSessionItem(options: { readonly request: vscode.ChatRequest; metadata?: any; }, token: vscode.CancellationToken): vscode.ProviderResult<vscode.ChatSessionItem> {
@@ -214,6 +207,8 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	const untitledOptions = _sessionOptions.get(original.id);
 	if (untitledOptions) {
 		_sessionOptions.set(newSessionId, untitledOptions);
+		// Clean up the untitled session options to avoid memory leaks
+		_sessionOptions.delete(original.id);
 	}
 	
 	_chatSessions.set(newSessionId, {

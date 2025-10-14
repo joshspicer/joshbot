@@ -95,8 +95,9 @@ export function activate(context: vscode.ExtensionContext) {
 				console.log(`Session ${sessionId} model changed to: ${options.model.id} (${options.model.family})`);
 			}
 			
-			// Note: The session object will pick up the new options on the next call to provideChatSessionContent
-			// We don't update _chatSessions directly to avoid losing object identity
+			// Note: The session object will retrieve the new options from _sessionOptions Map
+			// on the next call to provideChatSessionContent. We don't update _chatSessions
+			// directly to avoid losing object identity and potential side effects.
 		}
 
 		// provideNewChatSessionItem(options: { readonly request: vscode.ChatRequest; metadata?: any; }, token: vscode.CancellationToken): vscode.ProviderResult<vscode.ChatSessionItem> {

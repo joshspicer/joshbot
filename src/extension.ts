@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 
-const CHAT_SESSION_TYPE = 'josh-bot';
+const CHAT_SESSION_TYPE = 'josh-bot-2';
 
 // Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];

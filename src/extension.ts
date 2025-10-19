@@ -11,8 +11,11 @@ const CHAT_SESSION_TYPE = 'josh-bot';
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
 
-// For now, just model.
-const _sessionModel: Map<string, vscode.LanguageModelChatInformation | undefined> = new Map();
+const MODELS_OPTION_ID = 'model';
+const SUB_AGENT_OPTION_ID = 'subagent';
+
+const _sessionModel: Map<string, vscode.ChatSessionProviderOptionItem | undefined> = new Map();
+const _sessionSubAgent: Map<string, vscode.ChatSessionProviderOptionItem | undefined> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
@@ -38,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 			} else {
 				/* follow up */
-				stream.markdown(`Welcome back! This is served by model: **${_sessionModel.get(original.id)?.name ?? 'unknown'}**\n\n`);
+				stream.markdown(`Welcome back! model=**${_sessionModel.get(original.id)?.name ?? 'unknown'}** submodel=**${_sessionSubAgent.get(original.id)?.name ?? 'unknown'}**\n\n`);
 			}
 		} else {
 			/*general query*/
@@ -53,40 +56,38 @@ export function activate(context: vscode.ExtensionContext) {
 		onDidCommitChatSessionItem: vscode.Event<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }> = onDidCommitChatSessionItemEmitter.event;
 
 		// Available models for session options
-		availableModels: vscode.LanguageModelChatInformation[] = [
+		availableModels: vscode.ChatSessionProviderOptionItem[] = [
 			{
 				id: 'joshbot-basic',
 				name: 'JoshBot Basic',
-				family: 'joshbot',
-				tooltip: 'A friendly and helpful basic model for everyday conversations',
-				detail: 'Entry-level assistant',
-				version: '1.0.0',
-				maxInputTokens: 4096,
-				maxOutputTokens: 1024,
-				capabilities: {}
 			},
 			{
 				id: 'joshbot-pro',
 				name: 'JoshBot Pro',
-				family: 'joshbot',
-				tooltip: 'Advanced JoshBot with enhanced capabilities including tool calling',
-				detail: 'Professional grade',
-				version: '2.1.5',
-				maxInputTokens: 8192,
-				maxOutputTokens: 2048,
-				capabilities: {}
 			},
 			{
 				id: 'joshbot-ultra',
 				name: 'JoshBot Ultra',
-				family: 'joshbot',
-				tooltip: 'The most advanced JoshBot model with multimodal capabilities',
-				detail: 'Ultimate experience',
-				version: '3.0.2',
-				maxInputTokens: 16384,
-				maxOutputTokens: 4096,
-				capabilities: {}
 			}
+		];
+
+		availableSubAgent: vscode.ChatSessionProviderOptionItem[] = [
+			{
+				id: 'basic',
+				name: 'Basic',
+			},
+			{
+				id: "summarizer",
+				name: "Summarizer",
+			},
+			{
+				id: "code-helper",
+				name: "Code Helper",
+			},
+			{
+				id: "research-assistant",
+				name: "Research Assistant",
+			},
 		];
 
 		async provideChatSessionItems(token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
@@ -117,6 +118,9 @@ export function activate(context: vscode.ExtensionContext) {
 			if (!_sessionModel.get(sessionId)) {
 				_sessionModel.set(sessionId, this.availableModels[0]);
 			}
+			if (!_sessionSubAgent.get(sessionId)) {
+				_sessionSubAgent.set(sessionId, this.availableSubAgent[0]);
+			}
 			switch (sessionId) {
 				case 'demo-session-01':
 				case 'demo-session-02':
@@ -136,19 +140,38 @@ export function activate(context: vscode.ExtensionContext) {
 
 		async provideChatSessionProviderOptions(token: vscode.CancellationToken): Promise<vscode.ChatSessionProviderOptions> {
 			return {
-				models: this.availableModels
+				optionGroups: [
+					{
+						id: MODELS_OPTION_ID, // TODO: Enum
+						name: 'Pick Model',
+						description: 'Select the JoshBot model to use',
+						items: this.availableModels,
+					},
+					{
+						id: SUB_AGENT_OPTION_ID,
+						name: 'Pick Sub-Agent',
+						description: 'Select the JoshBot sub-agent to assist you',
+						items: this.availableSubAgent,
+					}
+				]
 			};
 		}
 
 		// Handle option changes for a session (store current state in a map)
 		provideHandleOptionsChange(sessionId: string, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): void {
 			for (const update of updates) {
-				if (update.optionId === 'model') {
+				if (update.optionId === MODELS_OPTION_ID) {
 					if (typeof update.value === 'undefined') {
 						_sessionModel.set(sessionId, undefined);
 					} else {
-						const model = this.availableModels.find(m => m.id === update.value);
-						_sessionModel.set(sessionId, model);
+						_sessionModel.set(sessionId, this.availableModels.find(m => m.id === update.value));
+					}
+				}
+				if (update.optionId === SUB_AGENT_OPTION_ID) {
+					if (typeof update.value === 'undefined') {
+						_sessionSubAgent.set(sessionId, undefined);
+					} else {
+						_sessionSubAgent.set(sessionId, this.availableSubAgent.find(sa => sa.id === update.value));
 					}
 				}
 			}
@@ -261,7 +284,10 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
 		]
 		,
-		options: { model: _sessionModel.get(newSessionId) }
+		options: { 
+			[MODELS_OPTION_ID]: _sessionModel.get(newSessionId)?.id ?? 'joshbot-basic',
+			[SUB_AGENT_OPTION_ID]: _sessionSubAgent.get(newSessionId)?.id ?? 'basic',
+		}
 	});
 	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
 	onDidCommitChatSessionItemEmitter.fire({ original, modified: newSessionItem });
@@ -273,13 +299,17 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
 	const currentModel = _sessionModel.get(sessionId);
+	const currentSubAgent = _sessionSubAgent.get(sessionId);
 	return {
 		history: [
 			new vscode.ChatRequestTurn2(`hello. Using model: ${currentModel?.name}`, undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
-		options: { model: currentModel },
+		options: { 
+			[MODELS_OPTION_ID]: currentModel?.id ?? 'joshbot-basic',
+			[SUB_AGENT_OPTION_ID]: currentSubAgent?.id ?? 'basic',
+		 },
 		// requestHandler: async (request, context, stream, token) => {
 		// 	stream.markdown(`\n\nHello from ${sessionId}`);
 		// 	return {};
@@ -304,7 +334,10 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			stream.markdown(`4!\n`);
 		},
 		requestHandler: undefined,
-		options: { model: _sessionModel.get(sessionId) },
+		options: { 
+			[MODELS_OPTION_ID]: _sessionModel.get(sessionId)?.id ?? 'joshbot-basic',
+			[SUB_AGENT_OPTION_ID]: _sessionSubAgent.get(sessionId)?.id ?? 'basic'
+		},
 		// requestHandler: async (request, context, stream, token) => {
 		// 	stream.markdown(`Hello from ${sessionId}`);
 		// 	return {};
@@ -323,7 +356,10 @@ function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
-		options: { model: _sessionModel.get(sessionId) },
+		options: { 
+			[MODELS_OPTION_ID]: _sessionModel.get(sessionId)?.id ?? 'joshbot-basic',
+			[SUB_AGENT_OPTION_ID]: _sessionSubAgent.get(sessionId)?.id ?? 'basic'
+		},
 		// requestHandler: async (request, context, stream, token) => {
 		// 	stream.markdown(`\n\nHello from ${sessionId}`);
 		// 	return {};

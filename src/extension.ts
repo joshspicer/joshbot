@@ -226,6 +226,20 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 			}
 			return;
 		}
+		case 'yolo': {
+			const yoloMessages = [
+				'🚀 **YOLO!** Take that leap - write code without tests! (Just kidding, always test your code 😉)',
+				'💪 **You Only Live Once!** Time to refactor that legacy code you\'ve been avoiding!',
+				'🎯 **YOLO MODE ACTIVATED!** Deploy on Friday? Why not! (Okay, maybe wait until Monday...)',
+				'✨ **YOLO!** Delete that commented-out code - you won\'t need it! (Famous last words...)',
+				'🎪 **You Only Live Once!** Ship it! What could possibly go wrong?',
+				'🔥 **YOLO!** Merge directly to main? Living on the edge! (Please use pull requests 🙏)',
+				'🌟 **You Only Live Once!** Time to learn that new framework everyone\'s talking about!'
+			];
+			const randomMessage = yoloMessages[Math.floor(Math.random() * yoloMessages.length)];
+			stream.markdown(randomMessage);
+			return;
+		}
 		default:
 			stream.warning(`Unknown command: ${command}`);
 			return;

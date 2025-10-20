@@ -58,6 +58,10 @@
             {
               "name": "set-secret",
               "description": "Store a secret: /set-secret <key> <value>"
+            },
+            {
+              "name": "yolo",
+              "description": "You Only Live Once - Get a motivational message!"
             }
         ],
         "capabilities": {

@@ -50,6 +50,23 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(chatParticipant);
 
+	// Register command handlers
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.snake', () => {
+			vscode.window.showInformationMessage('Snake! 🐍');
+		})
+	);
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.squirrel', () => {
+			vscode.window.showInformationMessage('Squirrel! 🐿️');
+		})
+	);
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.yolo3', () => {
+			vscode.window.showInformationMessage('Yolo3! 🚀');
+		})
+	);
+
 	// Create session provider
 	const sessionProvider = new class implements vscode.ChatSessionItemProvider, vscode.ChatSessionContentProvider {
 		onDidChangeChatSessionItems = new vscode.EventEmitter<void>().event;

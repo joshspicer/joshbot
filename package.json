@@ -87,6 +87,12 @@
         "title": "Squirrel!",
         "category": "JoshBot",
         "icon": "$(squirrel)"
+      },
+      {
+        "command": "joshbot.yolo3",
+        "title": "Yolo3!",
+        "category": "JoshBot",
+        "icon": "$(rocket)"
       }
     ],
     "configuration": {
@@ -112,6 +118,10 @@
         },
         {
           "command": "joshbot.snake",
+          "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.yolo3",
           "when": "chatSessionType == josh-bot"
         }
       ]

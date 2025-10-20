@@ -55,10 +55,10 @@
             "name": "secrets",
             "description": "List stored secret keys"
           },
-            {
-              "name": "set-secret",
-              "description": "Store a secret: /set-secret <key> <value>"
-            }
+          {
+            "name": "set-secret",
+            "description": "Store a secret: /set-secret <key> <value>"
+          }
         ],
         "capabilities": {
           "supportsFileAttachments": true
@@ -87,6 +87,12 @@
         "title": "Squirrel!",
         "category": "JoshBot",
         "icon": "$(squirrel)"
+      },
+      {
+        "command": "joshbot.yolo4",
+        "title": "YOLO4!",
+        "category": "JoshBot",
+        "icon": "$(rocket)"
       }
     ],
     "configuration": {
@@ -113,6 +119,10 @@
         {
           "command": "joshbot.snake",
           "when": "chatSessionType == josh-bot"
+        },
+        {
+          "command": "joshbot.yolo4",
+          "when": "chatSessionType == josh-bot"
         }
       ]
     }
@@ -131,11 +141,10 @@
   },
   "devDependencies": {
     "@types/node": "16.x",
+    "@vscode/dts": "^0.4.1",
     "@vscode/vsce": "^3.6.0",
-    "typescript": "^5.8.0",
-    "@vscode/dts": "^0.4.1"
+    "typescript": "^5.8.0"
   },
-  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/joshspicer/joshbot.git"

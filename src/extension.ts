@@ -93,41 +93,58 @@ export function activate(context: vscode.ExtensionContext) {
 		async provideChatSessionItems(token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
 			return [
 				{
-					id: 'demo-session-01',
+					id: 'demo-with-options-01',
 					label: 'JoshBot Demo Session 01',
-					resource: vscode.Uri.parse('vscode-chat-session://joshbot/demo-session-01'),
+					resource: vscode.Uri.parse('vscode-chat-session://joshbot/demo-with-options-01'),
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
-					id: 'demo-session-02',
+					id: 'demo-with-options-02',
 					label: 'JoshBot Demo Session 02',
-					resource: vscode.Uri.parse('vscode-chat-session://joshbot/demo-session-02'),
+					resource: vscode.Uri.parse('vscode-chat-session://joshbot/demo-with-options-02'),
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
-					id: 'demo-session-03',
-					label: 'JoshBot Demo Session 03',
-					resource: vscode.Uri.parse('vscode-chat-session://joshbot/demo-session-03'),
+					id: 'demo-no-options-03',
+					label: 'JoshBot Demo Session 03 (no options shown)',
+					resource: vscode.Uri.parse('vscode-chat-session://joshbot/demo-no-options-03'),
+					status: vscode.ChatSessionStatus.Completed
+				},
+				{
+					id: 'demo-with-options-04',
+					label: 'JoshBot Demo Session 04',
+					resource: vscode.Uri.parse('vscode-chat-session://joshbot/demo-with-options-04'),
 					status: vscode.ChatSessionStatus.InProgress
 				},
 				..._sessionItems,
 			];
 		}
 		async provideChatSessionContent(sessionId: string, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-			// Set default model
-			if (!_sessionModel.get(sessionId)) {
-				_sessionModel.set(sessionId, this.availableModels[0]);
-			}
-			if (!_sessionSubAgent.get(sessionId)) {
-				_sessionSubAgent.set(sessionId, this.availableSubAgent[0]);
+			const setDefaultOptionsIfMissing = () => {
+				if (!_sessionModel.get(sessionId)) {
+					_sessionModel.set(sessionId, this.availableModels[0]);
+				}
+				if (!_sessionSubAgent.get(sessionId)) {
+					_sessionSubAgent.set(sessionId, this.availableSubAgent[0]);
+				}
 			}
 			switch (sessionId) {
-				case 'demo-session-01':
-				case 'demo-session-02':
-					return completedChatSessionContent(sessionId);
-				case 'demo-session-03':
+				case 'demo-with-options-01':
+				case 'demo-with-options-02':
+					setDefaultOptionsIfMissing();
+					return completedChatSessionContent(sessionId, true);
+
+				case 'demo-no-options-03':
+					// NOTE: Does NOT set default options
+					return completedChatSessionContent(sessionId, false);
+
+				case 'demo-with-options-04':
+					setDefaultOptionsIfMissing();
 					return inProgressChatSessionContent(sessionId);
+
+				// case sessionId.startsWith('untitled-'):
 				default:
+					setDefaultOptionsIfMissing();
 					const existing = _chatSessions.get(sessionId);
 					if (existing) {
 						// Ensure options are returned from stored session options when present
@@ -294,7 +311,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 }
 
 
-function completedChatSessionContent(sessionId: string): vscode.ChatSession {
+function completedChatSessionContent(sessionId: string, showOptions?: boolean): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
@@ -306,10 +323,10 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
-		options: { 
+		options: (showOptions ? { 
 			[MODELS_OPTION_ID]: currentModel?.id ?? 'joshbot-basic',
 			[SUB_AGENT_OPTION_ID]: currentSubAgent?.id ?? 'basic',
-		 },
+		 } : undefined),
 		// requestHandler: async (request, context, stream, token) => {
 		// 	stream.markdown(`\n\nHello from ${sessionId}`);
 		// 	return {};
@@ -327,7 +344,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
-			stream.progress(`\n\Still working\n`);
+			stream.progress(`\nStill working\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`2+2=...\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
@@ -345,7 +362,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 	};
 }
 
-function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
+function untitledChatSessionContent(sessionId: string, showOptions?: boolean): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n\n`));
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`This is an untitled session. Send a message to begin our session.\n`));
@@ -356,10 +373,10 @@ function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
-		options: { 
+		options: (showOptions ? { 
 			[MODELS_OPTION_ID]: _sessionModel.get(sessionId)?.id ?? 'joshbot-basic',
 			[SUB_AGENT_OPTION_ID]: _sessionSubAgent.get(sessionId)?.id ?? 'basic'
-		},
+		} : undefined),
 		// requestHandler: async (request, context, stream, token) => {
 		// 	stream.markdown(`\n\nHello from ${sessionId}`);
 		// 	return {};

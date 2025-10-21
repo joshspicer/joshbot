@@ -143,7 +143,7 @@ export function activate(context: vscode.ExtensionContext) {
 					return inProgressChatSessionContent(sessionId);
 
 				// case sessionId.startsWith('untitled-'):
-				default:
+				default: {
 					setDefaultOptionsIfMissing();
 					const existing = _chatSessions.get(sessionId);
 					if (existing) {
@@ -152,6 +152,7 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 					// Guess this is an untitled session. Play along.
 					return untitledChatSessionContent(sessionId);
+				}
 			}
 		}
 
@@ -250,7 +251,7 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 }
 
 function escapeMarkdown(value: string): string {
-	return value.replace(/[\\`*_{}\[\]()#+\-.!]/g, '\\$&');
+	return value.replace(/[\\`*_{}[\]()#+\-.!]/g, '\\$&');
 }
 
 async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {

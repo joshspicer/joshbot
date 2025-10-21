@@ -55,10 +55,10 @@
             "name": "secrets",
             "description": "List stored secret keys"
           },
-            {
-              "name": "set-secret",
-              "description": "Store a secret: /set-secret <key> <value>"
-            }
+          {
+            "name": "set-secret",
+            "description": "Store a secret: /set-secret <key> <value>"
+          }
         ],
         "capabilities": {
           "supportsFileAttachments": true
@@ -130,12 +130,16 @@
     "downloadapi": "node ./node_modules/@vscode/dts/index.js main && node ./node_modules/@vscode/dts/index.js dev"
   },
   "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "16.x",
+    "@vscode/dts": "^0.4.1",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.6.0",
-    "typescript": "^5.8.0",
-    "@vscode/dts": "^0.4.1"
+    "glob": "^11.0.3",
+    "mocha": "^11.7.4",
+    "typescript": "^5.8.0"
   },
-  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/joshspicer/joshbot.git"

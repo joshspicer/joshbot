@@ -41,12 +41,20 @@ export function activate(context: vscode.ExtensionContext) {
 
 			} else {
 				/* follow up */
-				const sessionId = getSessionIdFromResource(original.resource);
-				stream.markdown(`Welcome back! model=**${_sessionModel.get(sessionId)?.name ?? 'unknown'}** subAgent=**${_sessionSubAgent.get(sessionId)?.name ?? 'unknown'}**\n\n`);
+				const sessionId = original.resource ? getSessionIdFromResource(original.resource) : original.id;
+				// Add funny animation effect - hehe lol
+				const welcomeEmojis = ['👋', '🎉', '😄', '🌈', '⭐', '💪', '🚀', '🔥'];
+				const randomWelcome = welcomeEmojis[Math.floor(Math.random() * welcomeEmojis.length)];
+				stream.markdown(`${randomWelcome} Welcome back! model=**${_sessionModel.get(sessionId)?.name ?? 'unknown'}** subAgent=**${_sessionSubAgent.get(sessionId)?.name ?? 'unknown'}** ${randomWelcome}\n\n`);
 			}
 		} else {
 			/*general query*/
-			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
+			// Add funny animation effect - hehe lol
+			const funnyEmojis = ['🎉', '🎊', '🎈', '✨', '🌟', '💫', '🎪', '🎭', '🎨', '🎯'];
+			const randomEmoji1 = funnyEmojis[Math.floor(Math.random() * funnyEmojis.length)];
+			const randomEmoji2 = funnyEmojis[Math.floor(Math.random() * funnyEmojis.length)];
+			const randomEmoji3 = funnyEmojis[Math.floor(Math.random() * funnyEmojis.length)];
+			stream.markdown(`${randomEmoji1}${randomEmoji2}${randomEmoji3} Howdy! I am joshbot, your friendly chat companion. ${randomEmoji3}${randomEmoji2}${randomEmoji1}`);
 		}
 	});
 	context.subscriptions.push(chatParticipant);
@@ -94,21 +102,25 @@ export function activate(context: vscode.ExtensionContext) {
 		async provideChatSessionItems(token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
 			return [
 				{
+					id: 'demo-with-options-01',
 					label: 'JoshBot Demo Session 01',
 					resource: vscode.Uri.from({ scheme: CHAT_SESSION_TYPE, path: '/demo-with-options-01' }),
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
+					id: 'demo-with-options-02',
 					label: 'JoshBot Demo Session 02',
 					resource: vscode.Uri.from({ scheme: CHAT_SESSION_TYPE, path: '/demo-with-options-02' }),
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
+					id: 'demo-no-options-03',
 					label: 'JoshBot Demo Session 03 (no options shown)',
 					resource: vscode.Uri.from({ scheme: CHAT_SESSION_TYPE, path: '/demo-no-options-03' }),
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
+					id: 'demo-with-options-04',
 					label: 'JoshBot Demo Session 04',
 					resource: vscode.Uri.from({ scheme: CHAT_SESSION_TYPE, path: '/demo-with-options-04' }),
 					status: vscode.ChatSessionStatus.InProgress
@@ -116,8 +128,7 @@ export function activate(context: vscode.ExtensionContext) {
 				..._sessionItems,
 			];
 		}
-		async provideChatSessionContent(resource: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-			const sessionId = getSessionIdFromResource(resource);
+		async provideChatSessionContent(sessionId: string, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
 			const setDefaultOptionsIfMissing = () => {
 				if (!_sessionModel.get(sessionId)) {
 					_sessionModel.set(sessionId, this.availableModels[0]);
@@ -173,8 +184,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		// Handle option changes for a session (store current state in a map)
-		provideHandleOptionsChange(resource: vscode.Uri, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): void {
-			const sessionId = getSessionIdFromResource(resource);
+		provideHandleOptionsChange(sessionId: string, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): void {
 			for (const update of updates) {
 				if (update.optionId === MODELS_OPTION_ID) {
 					if (typeof update.value === 'undefined') {
@@ -280,13 +290,19 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 		return;
 	}
 
-	stream.progress(`Creating new session...\n\n`);
-	await new Promise(resolve => setTimeout(resolve, 3000));
+	// Add funny animation effect - hehe lol
+	stream.progress(`✨ Creating new session...\n\n`);
+	await new Promise(resolve => setTimeout(resolve, 1000));
+	stream.progress(`🎨 Adding some sparkles...\n\n`);
+	await new Promise(resolve => setTimeout(resolve, 1000));
+	stream.progress(`🎉 Almost done...\n\n`);
+	await new Promise(resolve => setTimeout(resolve, 1000));
 
 	/* Exchange this untitled session for a 'real' session */
 	const count = _sessionItems.length + 1;
 	const newSessionId = `session-${count}`;
 	const newSessionItem: vscode.ChatSessionItem = {
+		id: newSessionId,
 		resource: vscode.Uri.from({ scheme: CHAT_SESSION_TYPE, path: '/' + newSessionId }),
 		label: `JoshBot Session ${count}`,
 		status: vscode.ChatSessionStatus.Completed
@@ -296,7 +312,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 		requestHandler: undefined,
 		history: [
 			new vscode.ChatRequestTurn2('Create a new session', undefined, [], 'joshbot', [], []),
-			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
+			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`🎊 This is the start of session ${count}! Let's make something awesome together! 🚀\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
 		]
 		,
 		options: { 

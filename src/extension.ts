@@ -23,6 +23,20 @@ let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.Ch
  * Helper function to create a webview panel with ASCII art
  */
 function createAsciiArtPanel(id: string, title: string, art: string, color: string): void {
+	// Validate color format to prevent CSS injection
+	const hexColorRegex = /^#[0-9a-fA-F]{6}$/;
+	const safeColor = hexColorRegex.test(color) ? color : '#ffffff';
+	
+	// HTML-escape the art content to prevent XSS
+	const escapeHtml = (text: string): string => {
+		return text
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+	};
+	
 	const panel = vscode.window.createWebviewPanel(
 		id,
 		title,
@@ -36,7 +50,7 @@ function createAsciiArtPanel(id: string, title: string, art: string, color: stri
 			<style>
 				body { 
 					background-color: #1e1e1e; 
-					color: ${color}; 
+					color: ${safeColor}; 
 					font-family: 'Courier New', monospace;
 					display: flex;
 					justify-content: center;
@@ -52,7 +66,7 @@ function createAsciiArtPanel(id: string, title: string, art: string, color: stri
 			</style>
 		</head>
 		<body>
-			<pre>${art}</pre>
+			<pre>${escapeHtml(art)}</pre>
 		</body>
 		</html>
 	`;

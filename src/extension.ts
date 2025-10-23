@@ -19,6 +19,45 @@ const _sessionSubAgent: Map<string, vscode.ChatSessionProviderOptionItem | undef
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
+/**
+ * Helper function to create a webview panel with ASCII art
+ */
+function createAsciiArtPanel(id: string, title: string, art: string, color: string): void {
+	const panel = vscode.window.createWebviewPanel(
+		id,
+		title,
+		vscode.ViewColumn.One,
+		{}
+	);
+	panel.webview.html = `
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<style>
+				body { 
+					background-color: #1e1e1e; 
+					color: ${color}; 
+					font-family: 'Courier New', monospace;
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					height: 100vh;
+					margin: 0;
+				}
+				pre {
+					font-size: 14px;
+					line-height: 1.2;
+					text-align: center;
+				}
+			</style>
+		</head>
+		<body>
+			<pre>${art}</pre>
+		</body>
+		</html>
+	`;
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
@@ -32,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 \\/     /~     \\_/ \\
  \\____|__________/  \\
         \\_______      \\
-                \`\\     \\                 \\
+                '\\     \\                 \\
                   |     |                  \\
                  /      /                    \\
                 /     /                       \\\\
@@ -47,39 +86,7 @@ export function activate(context: vscode.ExtensionContext) {
 `;
 			vscode.window.showInformationMessage('🐍 Ssssssuperb! You found the snake! 🐍', 'Show Art').then(selection => {
 				if (selection === 'Show Art') {
-					const panel = vscode.window.createWebviewPanel(
-						'snakeArt',
-						'🐍 Snake Art',
-						vscode.ViewColumn.One,
-						{}
-					);
-					panel.webview.html = `
-						<!DOCTYPE html>
-						<html>
-						<head>
-							<style>
-								body { 
-									background-color: #1e1e1e; 
-									color: #00ff00; 
-									font-family: 'Courier New', monospace;
-									display: flex;
-									justify-content: center;
-									align-items: center;
-									height: 100vh;
-									margin: 0;
-								}
-								pre {
-									font-size: 14px;
-									line-height: 1.2;
-									text-align: center;
-								}
-							</style>
-						</head>
-						<body>
-							<pre>${snakeArt}</pre>
-						</body>
-						</html>
-					`;
+					createAsciiArtPanel('snakeArt', '🐍 Snake Art', snakeArt, '#00ff00');
 				}
 			});
 		})
@@ -100,39 +107,7 @@ export function activate(context: vscode.ExtensionContext) {
 `;
 			vscode.window.showInformationMessage('🐿️ Nutty discovery! You found the squirrel! 🐿️', 'Show Art').then(selection => {
 				if (selection === 'Show Art') {
-					const panel = vscode.window.createWebviewPanel(
-						'squirrelArt',
-						'🐿️ Squirrel Art',
-						vscode.ViewColumn.One,
-						{}
-					);
-					panel.webview.html = `
-						<!DOCTYPE html>
-						<html>
-						<head>
-							<style>
-								body { 
-									background-color: #1e1e1e; 
-									color: #ff8c00; 
-									font-family: 'Courier New', monospace;
-									display: flex;
-									justify-content: center;
-									align-items: center;
-									height: 100vh;
-									margin: 0;
-								}
-								pre {
-									font-size: 14px;
-									line-height: 1.2;
-									text-align: center;
-								}
-							</style>
-						</head>
-						<body>
-							<pre>${squirrelArt}</pre>
-						</body>
-						</html>
-					`;
+					createAsciiArtPanel('squirrelArt', '🐿️ Squirrel Art', squirrelArt, '#ff8c00');
 				}
 			});
 		})

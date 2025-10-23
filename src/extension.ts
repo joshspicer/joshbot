@@ -14,6 +14,11 @@ const _chatSessions: Map<string, vscode.ChatSession> = new Map();
 const MODELS_OPTION_ID = 'model';
 const SUB_AGENT_OPTION_ID = 'subagent';
 
+// Helper function to extract session ID from Uri
+function getSessionIdFromUri(resource: vscode.Uri): string {
+	return resource.path.split('/').pop() || resource.toString();
+}
+
 const _sessionModel: Map<string, vscode.ChatSessionProviderOptionItem | undefined> = new Map();
 const _sessionSubAgent: Map<string, vscode.ChatSessionProviderOptionItem | undefined> = new Map();
 
@@ -30,7 +35,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		if (chatContext.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = chatContext.chatSessionContext;
-			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
+			const sessionId = getSessionIdFromUri(original.resource);
+			// stream.markdown(`Good day! This is chat session '${sessionId}'\n\n`);
 			if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 				return handleConfirmationData(request, chatContext, stream, token);
 			}
@@ -41,7 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 			} else {
 				/* follow up */
-				stream.markdown(`Welcome back! model=**${_sessionModel.get(original.id)?.name ?? 'unknown'}** submodel=**${_sessionSubAgent.get(original.id)?.name ?? 'unknown'}**\n\n`);
+				stream.markdown(`Welcome back! model=**${_sessionModel.get(sessionId)?.name ?? 'unknown'}** submodel=**${_sessionSubAgent.get(sessionId)?.name ?? 'unknown'}**\n\n`);
 			}
 		} else {
 			/*general query*/
@@ -93,25 +99,21 @@ export function activate(context: vscode.ExtensionContext) {
 		async provideChatSessionItems(token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
 			return [
 				{
-					id: 'demo-with-options-01',
 					label: 'JoshBot Demo Session 01',
 					resource: vscode.Uri.parse('vscode-chat-session://joshbot/demo-with-options-01'),
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
-					id: 'demo-with-options-02',
 					label: 'JoshBot Demo Session 02',
 					resource: vscode.Uri.parse('vscode-chat-session://joshbot/demo-with-options-02'),
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
-					id: 'demo-no-options-03',
 					label: 'JoshBot Demo Session 03 (no options shown)',
 					resource: vscode.Uri.parse('vscode-chat-session://joshbot/demo-no-options-03'),
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
-					id: 'demo-with-options-04',
 					label: 'JoshBot Demo Session 04',
 					resource: vscode.Uri.parse('vscode-chat-session://joshbot/demo-with-options-04'),
 					status: vscode.ChatSessionStatus.InProgress
@@ -119,7 +121,8 @@ export function activate(context: vscode.ExtensionContext) {
 				..._sessionItems,
 			];
 		}
-		async provideChatSessionContent(sessionId: string, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
+		async provideChatSessionContent(resource: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
+			const sessionId = getSessionIdFromUri(resource);
 			const setDefaultOptionsIfMissing = () => {
 				if (!_sessionModel.get(sessionId)) {
 					_sessionModel.set(sessionId, this.availableModels[0]);
@@ -175,7 +178,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		// Handle option changes for a session (store current state in a map)
-		provideHandleOptionsChange(sessionId: string, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): void {
+		provideHandleOptionsChange(resource: vscode.Uri, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): void {
+			const sessionId = getSessionIdFromUri(resource);
 			for (const update of updates) {
 				if (update.optionId === MODELS_OPTION_ID) {
 					if (typeof update.value === 'undefined') {
@@ -288,8 +292,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	const count = _sessionItems.length + 1;
 	const newSessionId = `session-${count}`;
 	const newSessionItem: vscode.ChatSessionItem = {
-		id: newSessionId,
-		resource: vscode.Uri.parse(`vscode-chat-session://joshbot/newSessionId`),
+		resource: vscode.Uri.parse(`vscode-chat-session://joshbot/${newSessionId}`),
 		label: `JoshBot Session ${count}`,
 		status: vscode.ChatSessionStatus.Completed
 	};

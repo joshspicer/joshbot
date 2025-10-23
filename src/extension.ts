@@ -16,7 +16,11 @@ const SUB_AGENT_OPTION_ID = 'subagent';
 
 // Helper function to extract session ID from Uri
 function getSessionIdFromUri(resource: vscode.Uri): string {
-	return resource.path.split('/').pop() || resource.toString();
+	if (!resource || !resource.path) {
+		return resource?.toString() || '';
+	}
+	const parts = resource.path.split('/').filter(p => p.length > 0);
+	return parts.length > 0 ? parts[parts.length - 1] : resource.toString();
 }
 
 const _sessionModel: Map<string, vscode.ChatSessionProviderOptionItem | undefined> = new Map();

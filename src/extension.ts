@@ -22,6 +22,136 @@ let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.Ch
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
+	
+	// Register Snake command
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.snake', () => {
+			const snakeArt = `
+   /^\\/^\\
+  _|__|  O|
+\\/     /~     \\_/ \\
+ \\____|__________/  \\
+        \\_______      \\
+                \`\\     \\                 \\
+                  |     |                  \\
+                 /      /                    \\
+                /     /                       \\\\
+              /      /                         \\ \\
+             /     /                            \\  \\
+           /     /             _----_            \\   \\
+          /     /           _-~      ~-_         |   |
+         (      (        _-~    _--_    ~-_     _/   |
+          \\      ~-____-~    _-~    ~-_    ~-_-~    /
+            ~-_           _-~          ~-_       _-~
+               ~--______-~                ~-___-~
+`;
+			vscode.window.showInformationMessage('🐍 Ssssssuperb! You found the snake! 🐍', 'Show Art').then(selection => {
+				if (selection === 'Show Art') {
+					const panel = vscode.window.createWebviewPanel(
+						'snakeArt',
+						'🐍 Snake Art',
+						vscode.ViewColumn.One,
+						{}
+					);
+					panel.webview.html = `
+						<!DOCTYPE html>
+						<html>
+						<head>
+							<style>
+								body { 
+									background-color: #1e1e1e; 
+									color: #00ff00; 
+									font-family: 'Courier New', monospace;
+									display: flex;
+									justify-content: center;
+									align-items: center;
+									height: 100vh;
+									margin: 0;
+								}
+								pre {
+									font-size: 14px;
+									line-height: 1.2;
+									text-align: center;
+								}
+							</style>
+						</head>
+						<body>
+							<pre>${snakeArt}</pre>
+						</body>
+						</html>
+					`;
+				}
+			});
+		})
+	);
+
+	// Register Squirrel command
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.squirrel', () => {
+			const squirrelArt = `
+         ,;:;;,
+        ;;;;;
+  .=',  ;:;;:,
+ /_', "=. ';:;:;
+@=:__,  \\,;:;:'
+  _(\\:.  ;:;;'
+ / "; ;:;'
+ "  "
+`;
+			vscode.window.showInformationMessage('🐿️ Nutty discovery! You found the squirrel! 🐿️', 'Show Art').then(selection => {
+				if (selection === 'Show Art') {
+					const panel = vscode.window.createWebviewPanel(
+						'squirrelArt',
+						'🐿️ Squirrel Art',
+						vscode.ViewColumn.One,
+						{}
+					);
+					panel.webview.html = `
+						<!DOCTYPE html>
+						<html>
+						<head>
+							<style>
+								body { 
+									background-color: #1e1e1e; 
+									color: #ff8c00; 
+									font-family: 'Courier New', monospace;
+									display: flex;
+									justify-content: center;
+									align-items: center;
+									height: 100vh;
+									margin: 0;
+								}
+								pre {
+									font-size: 14px;
+									line-height: 1.2;
+									text-align: center;
+								}
+							</style>
+						</head>
+						<body>
+							<pre>${squirrelArt}</pre>
+						</body>
+						</html>
+					`;
+				}
+			});
+		})
+	);
+
+	// Register Hello command
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.hello', () => {
+			vscode.window.showInformationMessage('Hello from JoshBot! 👋');
+		})
+	);
+
+	// Register Cloud Button command (placeholder)
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.cloudButton', () => {
+			vscode.window.showInformationMessage('☁️ Cloud Button clicked! This could launch a remote coding session.');
+		})
+	);
+
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, chatContext, stream, token) => {
 		console.log(`chatUserPromptSummary: ${chatContext?.chatSummary?.prompt}`);
 		console.log(`chatHistorySummary: ${chatContext?.chatSummary?.history}`);

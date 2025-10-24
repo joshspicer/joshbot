@@ -184,8 +184,8 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 				return;
 			}
 			const item = parts.join(' ');
-			stream.markdown(`✅ Added item: **${escapeMarkdown(item)}**\n\n`);
-			stream.markdown('This is a demonstration command for the asdadd feature.');
+			stream.markdown(`✅ Item acknowledged: **${escapeMarkdown(item)}**\n\n`);
+			stream.markdown('_Note: This is a demonstration command. Items are not persisted._');
 			return;
 		}
 		default:

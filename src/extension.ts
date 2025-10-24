@@ -25,7 +25,6 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		if (chatContext.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = chatContext.chatSessionContext;
-			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
 			if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 				return handleConfirmationData(request, chatContext, stream, token);
 			}
@@ -99,10 +98,6 @@ export function activate(context: vscode.ExtensionContext) {
 			// on the next call to provideChatSessionContent. We don't update _chatSessions
 			// directly to avoid losing object identity and potential side effects.
 		}
-
-		// provideNewChatSessionItem(options: { readonly request: vscode.ChatRequest; metadata?: any; }, token: vscode.CancellationToken): vscode.ProviderResult<vscode.ChatSessionItem> {
-		// 	throw new Error('Method not implemented.');
-		// }
 	};
 	context.subscriptions.push(
 		vscode.chat.registerChatSessionItemProvider(CHAT_SESSION_TYPE, sessionProvider)
@@ -239,11 +234,7 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
-		options: options,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`\n\nHello from ${sessionId}`);
-		// 	return {};
-		// }
+		options: options
 	};
 }
 
@@ -261,18 +252,14 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
-			stream.progress(`\n\Still working\n`);
+			stream.progress(`\n\nStill working\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`2+2=...\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`4!\n`);
 		},
 		requestHandler: undefined,
-		options: options,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`Hello from ${sessionId}`);
-		// 	return {};
-		// }
+		options: options
 	};
 }
 
@@ -291,11 +278,7 @@ function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
-		options: options,
-		// requestHandler: async (request, context, stream, token) => {
-		// 	stream.markdown(`\n\nHello from ${sessionId}`);
-		// 	return {};
-		// }
+		options: options
 	};
 }
 

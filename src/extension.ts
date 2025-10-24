@@ -178,6 +178,16 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 			}
 			return;
 		}
+		case 'asdadd': {
+			if (parts.length === 0) {
+				stream.warning('Usage: /asdadd <item>');
+				return;
+			}
+			const item = parts.join(' ');
+			stream.markdown(`✅ Added item: **${escapeMarkdown(item)}**\n\n`);
+			stream.markdown('This is a demonstration command for the asdadd feature.');
+			return;
+		}
 		default:
 			stream.warning(`Unknown command: ${command}`);
 			return;

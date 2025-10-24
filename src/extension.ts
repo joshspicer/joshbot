@@ -110,6 +110,55 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.chat.registerChatSessionContentProvider(CHAT_SESSION_TYPE, sessionProvider, chatParticipant)
 	);
+
+	// Register command handlers
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.hello', () => {
+			vscode.window.showInformationMessage('Hello from JoshBot! 👋');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.cloudButton', () => {
+			vscode.window.showInformationMessage('☁️ Cloud Button activated! JoshBot is ready to assist you.');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.snake', () => {
+			const snakeArt = `
+🐍 Snake Time! 🐍
+
+    _____
+   /     \\
+  /  o o  \\
+ (  >   <  )
+  \\ \\_v_/ /
+   \\_____/
+    ~ ~ ~
+
+Ssssssuper!
+`;
+			vscode.window.showInformationMessage(snakeArt);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.squirrel', () => {
+			const squirrelArt = `
+🐿️ Squirrel Alert! 🐿️
+
+    /\\_/\\
+   ( o.o )
+    > ^ <
+   /|   |\\
+  (_|   |_)
+
+Nuts about coding!
+`;
+			vscode.window.showInformationMessage(squirrelArt);
+		})
+	);
 }
 
 async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscode.ExtensionContext | undefined, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {

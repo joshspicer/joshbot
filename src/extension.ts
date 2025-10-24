@@ -110,6 +110,13 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.chat.registerChatSessionContentProvider(CHAT_SESSION_TYPE, sessionProvider, chatParticipant)
 	);
+
+	// Register the waaaahooo command
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.waaaahooo', () => {
+			vscode.window.showInformationMessage('🚀 Waaaahooo! 🎉');
+		})
+	);
 }
 
 async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscode.ExtensionContext | undefined, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {

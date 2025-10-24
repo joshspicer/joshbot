@@ -10,7 +10,7 @@ const CHAT_SESSION_TYPE = 'josh-bot';
 // Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
-const _sessionOptions: Map<string, vscode.ChatSessionOptions> = new Map();
+const _sessionOptions: Map<string, Record<string, string>> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
@@ -52,29 +52,30 @@ export function activate(context: vscode.ExtensionContext) {
 		async provideChatSessionItems(token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
 			return [
 				{
-					id: 'demo-session-01',
+					resource: vscode.Uri.parse('joshbot://demo-session-01'),
 					label: 'JoshBot Demo Session 01',
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
-					id: 'demo-session-02',
+					resource: vscode.Uri.parse('joshbot://demo-session-02'),
 					label: 'JoshBot Demo Session 02',
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
-					id: 'demo-session-03',
+					resource: vscode.Uri.parse('joshbot://demo-session-03'),
 					label: 'JoshBot Demo Session 03',
 					status: vscode.ChatSessionStatus.InProgress
 				},
 				..._sessionItems,
 			];
 		}
-		async provideChatSessionContent(sessionId: string, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
+		async provideChatSessionContent(resource: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
+			const sessionId = resource.toString();
 			switch (sessionId) {
-				case 'demo-session-01':
-				case 'demo-session-02':
+				case 'joshbot://demo-session-01':
+				case 'joshbot://demo-session-02':
 					return completedChatSessionContent(sessionId);
-				case 'demo-session-03':
+				case 'joshbot://demo-session-03':
 					return inProgressChatSessionContent(sessionId);
 				default:
 					const existing = _chatSessions.get(sessionId);
@@ -86,14 +87,27 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
-		async provideHandleOptionsChange(sessionId: string, options: vscode.ChatSessionOptions, token: vscode.CancellationToken): Promise<void> {
-			// Store the new options for this session
-			_sessionOptions.set(sessionId, options);
+		async provideHandleOptionsChange(resource: vscode.Uri, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): Promise<void> {
+			const sessionId = resource.toString();
 			
-			// Log the model change for debugging
-			if (options.model) {
-				console.log(`Session ${sessionId} model changed to: ${options.model.id} (${options.model.family})`);
+			// Get existing options for this session
+			const existingOptions = _sessionOptions.get(sessionId) || {};
+			
+			// Apply updates by creating a new options object
+			const newOptions = { ...existingOptions };
+			for (const update of updates) {
+				if (update.value !== undefined) {
+					newOptions[update.optionId] = update.value;
+				} else {
+					delete newOptions[update.optionId];
+				}
 			}
+			
+			// Store the updated options
+			_sessionOptions.set(sessionId, newOptions);
+			
+			// Log the changes for debugging
+			console.log(`Session ${sessionId} options updated:`, newOptions);
 			
 			// Note: The session object will retrieve the new options from _sessionOptions Map
 			// on the next call to provideChatSessionContent. We don't update _chatSessions
@@ -109,6 +123,55 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 	context.subscriptions.push(
 		vscode.chat.registerChatSessionContentProvider(CHAT_SESSION_TYPE, sessionProvider, chatParticipant)
+	);
+
+	// Register command handlers
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.hello', () => {
+			vscode.window.showInformationMessage('Hello from JoshBot! 👋');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.cloudButton', () => {
+			vscode.window.showInformationMessage('☁️ Cloud Button activated! JoshBot is ready to assist you.');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.snake', () => {
+			const snakeArt = `
+🐍 Snake Time! 🐍
+
+    _____
+   /     \\
+  /  o o  \\
+ (  >   <  )
+  \\ \\_v_/ /
+   \\_____/
+    ~ ~ ~
+
+Ssssssuper!
+`;
+			vscode.window.showInformationMessage(snakeArt);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.squirrel', () => {
+			const squirrelArt = `
+🐿️ Squirrel Alert! 🐿️
+
+    /\\_/\\
+   ( o.o )
+    > ^ <
+   /|   |\\
+  (_|   |_)
+
+Nuts about coding!
+`;
+			vscode.window.showInformationMessage(squirrelArt);
+		})
 	);
 }
 
@@ -196,20 +259,22 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 
 	/* Exchange this untitled session for a 'real' session */
 	const count = _sessionItems.length + 1;
-	const newSessionId = `session-${count}`;
+	const newSessionUri = vscode.Uri.parse(`joshbot://session-${count}`);
+	const newSessionId = newSessionUri.toString();
 	const newSessionItem: vscode.ChatSessionItem = {
-		id: newSessionId,
+		resource: newSessionUri,
 		label: `JoshBot Session ${count}`,
 		status: vscode.ChatSessionStatus.Completed
 	};
 	_sessionItems.push(newSessionItem);
 	
 	// Transfer options from the untitled session to the new session
-	const untitledOptions = _sessionOptions.get(original.id);
+	const originalSessionId = original.resource.toString();
+	const untitledOptions = _sessionOptions.get(originalSessionId);
 	if (untitledOptions) {
 		_sessionOptions.set(newSessionId, untitledOptions);
 		// Clean up the untitled session options to avoid memory leaks
-		_sessionOptions.delete(original.id);
+		_sessionOptions.delete(originalSessionId);
 	}
 	
 	_chatSessions.set(newSessionId, {
@@ -261,7 +326,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
-			stream.progress(`\n\Still working\n`);
+			stream.progress(`\nStill working\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`2+2=...\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));

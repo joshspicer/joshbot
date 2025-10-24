@@ -90,23 +90,24 @@ export function activate(context: vscode.ExtensionContext) {
 		async provideHandleOptionsChange(resource: vscode.Uri, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): Promise<void> {
 			const sessionId = resource.toString();
 			
-			// Get or create options for this session
-			let options = _sessionOptions.get(sessionId) || {};
+			// Get existing options for this session
+			const existingOptions = _sessionOptions.get(sessionId) || {};
 			
-			// Apply updates
+			// Apply updates by creating a new options object
+			const newOptions = { ...existingOptions };
 			for (const update of updates) {
 				if (update.value !== undefined) {
-					options[update.optionId] = update.value;
+					newOptions[update.optionId] = update.value;
 				} else {
-					delete options[update.optionId];
+					delete newOptions[update.optionId];
 				}
 			}
 			
 			// Store the updated options
-			_sessionOptions.set(sessionId, options);
+			_sessionOptions.set(sessionId, newOptions);
 			
 			// Log the changes for debugging
-			console.log(`Session ${sessionId} options updated:`, options);
+			console.log(`Session ${sessionId} options updated:`, newOptions);
 			
 			// Note: The session object will retrieve the new options from _sessionOptions Map
 			// on the next call to provideChatSessionContent. We don't update _chatSessions
@@ -325,7 +326,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
-			stream.progress(`\n\Still working\n`);
+			stream.progress(`\nStill working\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`2+2=...\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));

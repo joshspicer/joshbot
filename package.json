@@ -87,6 +87,12 @@
         "title": "Squirrel!",
         "category": "JoshBot",
         "icon": "$(squirrel)"
+      },
+      {
+        "command": "joshbot.waaaahooo",
+        "title": "Waaaahooo!",
+        "category": "JoshBot",
+        "icon": "$(rocket)"
       }
     ],
     "configuration": {

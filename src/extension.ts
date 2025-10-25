@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		if (chatContext.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = chatContext.chatSessionContext;
-			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
+			// stream.markdown(`Good day! This is chat session '${original.resource.toString()}'\n\n`);
 			if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 				return handleConfirmationData(request, chatContext, stream, token);
 			}

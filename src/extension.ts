@@ -10,6 +10,7 @@ const CHAT_SESSION_TYPE = 'josh-bot';
 // Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
+// Stores session options as flattened key-value pairs (e.g., 'model' -> 'gpt-4')
 const _sessionOptions: Map<string, Record<string, string>> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
@@ -103,15 +104,12 @@ export function activate(context: vscode.ExtensionContext) {
 					// Update the option with new value
 					updatedOptions[update.optionId] = update.value;
 				}
+				// Log the change for debugging
+				console.log(`Session ${sessionId} option '${update.optionId}' changed to: ${update.value}`);
 			}
 			
 			// Store the updated options for this session
 			_sessionOptions.set(sessionId, updatedOptions);
-			
-			// Log the changes for debugging
-			for (const update of updates) {
-				console.log(`Session ${sessionId} option '${update.optionId}' changed to: ${update.value}`);
-			}
 			
 			// Note: The session object will retrieve the new options from _sessionOptions Map
 			// on the next call to provideChatSessionContent. We don't update _chatSessions

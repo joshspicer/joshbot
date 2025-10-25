@@ -7,6 +7,11 @@ import * as vscode from 'vscode';
 
 const CHAT_SESSION_TYPE = 'josh-bot';
 
+// Helper function to extract session ID from URI
+function extractSessionId(resource: vscode.Uri): string {
+	return resource.path.replace(/^\//, '');
+}
+
 // Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
@@ -70,7 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
 			];
 		}
 		async provideChatSessionContent(resource: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-			const sessionId = resource.path.replace(/^\//, ''); // Extract session ID from URI path
+			const sessionId = extractSessionId(resource);
 			switch (sessionId) {
 				case 'demo-session-01':
 				case 'demo-session-02':
@@ -88,7 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		async provideHandleOptionsChange(resource: vscode.Uri, updates: readonly vscode.ChatSessionOptionUpdate[], token: vscode.CancellationToken): Promise<void> {
-			const sessionId = resource.path.replace(/^\//, ''); // Extract session ID from URI path
+			const sessionId = extractSessionId(resource);
 			
 			// Convert updates array to Record<string, string>
 			const currentOptions = _sessionOptions.get(sessionId) || {};
@@ -220,11 +225,11 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	_sessionItems.push(newSessionItem);
 	
 	// Transfer options from the untitled session to the new session
-	const untitledOptions = _sessionOptions.get(original.resource.path.replace(/^\//, ''));
+	const untitledOptions = _sessionOptions.get(extractSessionId(original.resource));
 	if (untitledOptions) {
 		_sessionOptions.set(newSessionId, untitledOptions);
 		// Clean up the untitled session options to avoid memory leaks
-		_sessionOptions.delete(original.resource.path.replace(/^\//, ''));
+		_sessionOptions.delete(extractSessionId(original.resource));
 	}
 	
 	_chatSessions.set(newSessionId, {

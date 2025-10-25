@@ -14,6 +14,14 @@ const _sessionOptions: Map<string, Record<string, string>> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
+/**
+ * Helper function to extract session ID from a URI resource.
+ * @param resource The URI resource representing the chat session
+ * @returns The session ID as a string
+ */
+function getSessionIdFromResource(resource: vscode.Uri): string {
+	return resource.toString();
+}
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
@@ -70,7 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
 			];
 		}
 		async provideChatSessionContent(resource: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-			const sessionId = resource.toString();
+			const sessionId = getSessionIdFromResource(resource);
 			switch (sessionId) {
 				case 'joshbot-session://demo-session-01':
 				case 'joshbot-session://demo-session-02':
@@ -88,7 +96,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		async provideHandleOptionsChange(resource: vscode.Uri, updates: readonly vscode.ChatSessionOptionUpdate[], token: vscode.CancellationToken): Promise<void> {
-			const sessionId = resource.toString();
+			const sessionId = getSessionIdFromResource(resource);
 			// Get existing options or create new object
 			const options = _sessionOptions.get(sessionId) || {};
 			
@@ -217,7 +225,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	_sessionItems.push(newSessionItem);
 	
 	// Transfer options from the untitled session to the new session
-	const originalResourceStr = original.resource.toString();
+	const originalResourceStr = getSessionIdFromResource(original.resource);
 	const untitledOptions = _sessionOptions.get(originalResourceStr);
 	if (untitledOptions) {
 		_sessionOptions.set(newSessionId, untitledOptions);

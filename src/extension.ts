@@ -20,6 +20,18 @@ export function activate(context: vscode.ExtensionContext) {
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, chatContext, stream, token) => {
 		console.log(`chatUserPromptSummary: ${chatContext?.chatSummary?.prompt}`);
 		console.log(`chatHistorySummary: ${chatContext?.chatSummary?.history}`);
+		
+		// Check for nonsensical input before processing
+		if (!request.command && isNonsensicalInput(request.prompt)) {
+			stream.markdown(`I'm not sure I understood that. Could you please rephrase your request or question?\n\n`);
+			stream.markdown(`I'm here to help with:\n`);
+			stream.markdown(`- Answering questions about your code\n`);
+			stream.markdown(`- Providing coding assistance\n`);
+			stream.markdown(`- Managing secrets with **/set-secret** and **/secrets** commands\n\n`);
+			stream.markdown(`Try asking me something like "How can I help you?" or use one of the available commands.`);
+			return;
+		}
+		
 		if (request.command) {
 			return await handleSlashCommand(request, context, stream, token);
 		}
@@ -161,6 +173,57 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 
 function escapeMarkdown(value: string): string {
 	return value.replace(/[\\`*_{}\[\]()#+\-.!]/g, '\\$&');
+}
+
+function isNonsensicalInput(input: string): boolean {
+	// Trim whitespace for analysis
+	const trimmed = input.trim();
+	
+	// Empty inputs are not nonsensical
+	if (trimmed.length === 0) {
+		return false;
+	}
+	
+	// Very short inputs (1-2 chars) could be valid (e.g., "ok", "hi", "a")
+	// Don't flag them as nonsensical
+	if (trimmed.length <= 2) {
+		return false;
+	}
+	
+	// Check for inputs with very few vowels relative to consonants (likely keyboard mashing)
+	if (trimmed.length >= 5 && trimmed.length <= 15) {
+		const vowelCount = (trimmed.match(/[aeiouAEIOU]/g) || []).length;
+		const consonantCount = (trimmed.match(/[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]/g) || []).length;
+		
+		// If it has many consonants but very few vowels (ratio > 4:1), likely nonsensical
+		if (consonantCount >= 5 && vowelCount <= 1) {
+			return true;
+		}
+	}
+	
+	// Check for repeated patterns (e.g., "dfsdfdsf", "asdasdasd")
+	const repeatingPattern = /(.{2,4})\1{2,}/.test(trimmed);
+	if (repeatingPattern && trimmed.length <= 15) {
+		return true;
+	}
+	
+	// Check for keyboard patterns (e.g., "asdfasdf", "qwerqwer")
+	const keyboardPatterns = [
+		/^[qwerty]+$/i,
+		/^[asdfgh]+$/i,
+		/^[zxcvbn]+$/i,
+		/^[qweasd]+$/i
+	];
+	
+	if (trimmed.length >= 4 && trimmed.length <= 15) {
+		for (const pattern of keyboardPatterns) {
+			if (pattern.test(trimmed)) {
+				return true;
+			}
+		}
+	}
+	
+	return false;
 }
 
 async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {

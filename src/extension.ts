@@ -201,21 +201,26 @@ function isNonsensicalInput(input: string): boolean {
 		}
 	}
 	
-	// Check for repeated patterns (e.g., "dfsdfdsf", "asdasdasd")
+	// Check for repeated patterns but exclude common valid repetitions
 	const repeatingPattern = /(.{2,4})\1{2,}/.test(trimmed);
 	if (repeatingPattern && trimmed.length <= 15) {
-		return true;
+		// Exclude common valid repeated patterns like "haha", "hehe", "lol"
+		const validRepeatedPatterns = ['haha', 'hehe', 'lol', 'lololol', 'mama', 'papa', 'nana'];
+		if (!validRepeatedPatterns.some(pattern => trimmed.toLowerCase().includes(pattern))) {
+			return true;
+		}
 	}
 	
-	// Check for keyboard patterns (e.g., "asdfasdf", "qwerqwer")
+	// Check for keyboard patterns with minimum length to avoid false positives
+	// Only flag if it's a longer sequence that's clearly keyboard mashing
 	const keyboardPatterns = [
-		/^[qwerty]+$/i,
-		/^[asdfgh]+$/i,
-		/^[zxcvbn]+$/i,
-		/^[qweasd]+$/i
+		/^[qwerty]{6,}$/i,     // Top row - require at least 6 chars to avoid "query", "try"
+		/^[asdfgh]{6,}$/i,     // Middle row - require at least 6 chars
+		/^[zxcvbn]{6,}$/i,     // Bottom row - require at least 6 chars to avoid "cv"
+		/^[qweasd]{6,}$/i      // Mixed adjacent keys
 	];
 	
-	if (trimmed.length >= 4 && trimmed.length <= 15) {
+	if (trimmed.length >= 6 && trimmed.length <= 15) {
 		for (const pattern of keyboardPatterns) {
 			if (pattern.test(trimmed)) {
 				return true;

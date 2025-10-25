@@ -175,6 +175,9 @@ function escapeMarkdown(value: string): string {
 	return value.replace(/[\\`*_{}\[\]()#+\-.!]/g, '\\$&');
 }
 
+// Common valid repeated patterns in natural language
+const VALID_REPEATED_PATTERNS = ['haha', 'hehe', 'lol', 'lololol', 'mama', 'papa', 'nana'];
+
 function isNonsensicalInput(input: string): boolean {
 	// Trim whitespace for analysis
 	const trimmed = input.trim();
@@ -204,24 +207,23 @@ function isNonsensicalInput(input: string): boolean {
 	// Check for repeated patterns but exclude common valid repetitions
 	const repeatingPattern = /(.{2,4})\1{2,}/.test(trimmed);
 	if (repeatingPattern && trimmed.length <= 15) {
-		// Exclude common valid repeated patterns like "haha", "hehe", "lol"
-		const validRepeatedPatterns = ['haha', 'hehe', 'lol', 'lololol', 'mama', 'papa', 'nana'];
-		if (!validRepeatedPatterns.some(pattern => trimmed.toLowerCase().includes(pattern))) {
+		// Check for exact match with valid patterns
+		const lowerInput = trimmed.toLowerCase();
+		if (!VALID_REPEATED_PATTERNS.includes(lowerInput)) {
 			return true;
 		}
 	}
 	
-	// Check for keyboard patterns with minimum length to avoid false positives
-	// Only flag if it's a longer sequence that's clearly keyboard mashing
-	const keyboardPatterns = [
-		/^[qwerty]{6,}$/i,     // Top row - require at least 6 chars to avoid "query", "try"
-		/^[asdfgh]{6,}$/i,     // Middle row - require at least 6 chars
-		/^[zxcvbn]{6,}$/i,     // Bottom row - require at least 6 chars to avoid "cv"
-		/^[qweasd]{6,}$/i      // Mixed adjacent keys
+	// Check for keyboard row patterns (actual sequences, not just character sets)
+	// These patterns look for actual sequences that suggest running fingers across keys
+	const keyboardSequencePatterns = [
+		/qwert|werty|ertyu|rtyui|tyuio|yuiop/i,  // Top row sequences
+		/asdfg|sdfgh|dfghj|fghjk|ghjkl/i,         // Middle row sequences
+		/zxcvb|xcvbn|cvbnm/i                       // Bottom row sequences
 	];
 	
-	if (trimmed.length >= 6 && trimmed.length <= 15) {
-		for (const pattern of keyboardPatterns) {
+	if (trimmed.length >= 5 && trimmed.length <= 15) {
+		for (const pattern of keyboardSequencePatterns) {
 			if (pattern.test(trimmed)) {
 				return true;
 			}

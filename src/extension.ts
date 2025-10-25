@@ -6,6 +6,12 @@
 import * as vscode from 'vscode';
 
 const CHAT_SESSION_TYPE = 'josh-bot';
+const MODEL_OPTION_ID = 'model';
+
+// Helper function to extract session ID from Uri
+function extractSessionId(resource: vscode.Uri): string {
+	return resource.path.replace(/^\//, ''); // Remove leading slash
+}
 
 // Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];
@@ -70,7 +76,7 @@ export function activate(context: vscode.ExtensionContext) {
 			];
 		}
 		async provideChatSessionContent(resource: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-			const sessionId = resource.path.replace(/^\//, ''); // Remove leading slash
+			const sessionId = extractSessionId(resource);
 			switch (sessionId) {
 				case 'demo-session-01':
 				case 'demo-session-02':
@@ -88,7 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		async provideHandleOptionsChange(resource: vscode.Uri, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): Promise<void> {
-			const sessionId = resource.path.replace(/^\//, ''); // Remove leading slash
+			const sessionId = extractSessionId(resource);
 			
 			// Get existing options or create new
 			const existingOptions = _sessionOptions.get(sessionId) || {};
@@ -107,7 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
 			_sessionOptions.set(sessionId, updatedOptions);
 			
 			// Log the model change for debugging
-			const modelUpdate = updates.find(u => u.optionId === 'model');
+			const modelUpdate = updates.find(u => u.optionId === MODEL_OPTION_ID);
 			if (modelUpdate?.value) {
 				console.log(`Session ${sessionId} model changed to: ${modelUpdate.value}`);
 			}
@@ -222,7 +228,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	_sessionItems.push(newSessionItem);
 	
 	// Transfer options from the untitled session to the new session
-	const untitledSessionId = original.resource.path.replace(/^\//, '');
+	const untitledSessionId = extractSessionId(original.resource);
 	const untitledOptions = _sessionOptions.get(untitledSessionId);
 	if (untitledOptions) {
 		_sessionOptions.set(newSessionId, untitledOptions);

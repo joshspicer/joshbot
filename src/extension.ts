@@ -15,9 +15,10 @@ const _sessionOptions: Map<string, Record<string, string>> = new Map();
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
 /**
- * Helper function to extract session ID from a URI resource.
+ * Helper function to get a session identifier string from a URI resource.
+ * Currently uses the full URI string as the identifier.
  * @param resource The URI resource representing the chat session
- * @returns The session ID as a string
+ * @returns The session identifier as a string
  */
 function getSessionIdFromResource(resource: vscode.Uri): string {
 	return resource.toString();

@@ -7,6 +7,11 @@ import * as vscode from 'vscode';
 
 const CHAT_SESSION_TYPE = 'josh-bot';
 
+// Helper function to extract session ID from a resource URI
+function getSessionIdFromResource(resource: vscode.Uri): string {
+	return resource.path.replace(/^\//, ''); // Remove leading slash from path
+}
+
 // Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
@@ -70,7 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
 			];
 		}
 		async provideChatSessionContent(resource: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-			const sessionId = resource.path.replace(/^\//, ''); // Remove leading slash from path
+			const sessionId = getSessionIdFromResource(resource);
 			switch (sessionId) {
 				case 'demo-session-01':
 				case 'demo-session-02':
@@ -88,7 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		async provideHandleOptionsChange(resource: vscode.Uri, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): Promise<void> {
-			const sessionId = resource.path.replace(/^\//, ''); // Remove leading slash from path
+			const sessionId = getSessionIdFromResource(resource);
 			
 			// Get or create the options record for this session
 			let options = _sessionOptions.get(sessionId);
@@ -219,7 +224,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	_sessionItems.push(newSessionItem);
 	
 	// Transfer options from the untitled session to the new session
-	const originalSessionId = original.resource.path.replace(/^\//, '');
+	const originalSessionId = getSessionIdFromResource(original.resource);
 	const untitledOptions = _sessionOptions.get(originalSessionId);
 	if (untitledOptions) {
 		_sessionOptions.set(newSessionId, untitledOptions);

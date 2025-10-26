@@ -7,10 +7,20 @@ import * as vscode from 'vscode';
 
 const CHAT_SESSION_TYPE = 'josh-bot';
 
+function convertUpdatesToOptions(updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>): Record<string, string> {
+	const options: Record<string, string> = {};
+	for (const update of updates) {
+		if (update.value !== undefined) {
+			options[update.optionId] = update.value;
+		}
+	}
+	return options;
+}
+
 // Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
-const _sessionOptions: Map<string, vscode.ChatSessionOptions> = new Map();
+const _sessionOptions: Map<string, ReadonlyArray<vscode.ChatSessionOptionUpdate>> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
@@ -52,29 +62,30 @@ export function activate(context: vscode.ExtensionContext) {
 		async provideChatSessionItems(token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
 			return [
 				{
-					id: 'demo-session-01',
+					resource: vscode.Uri.parse('joshbot-session://demo-session-01'),
 					label: 'JoshBot Demo Session 01',
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
-					id: 'demo-session-02',
+					resource: vscode.Uri.parse('joshbot-session://demo-session-02'),
 					label: 'JoshBot Demo Session 02',
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
-					id: 'demo-session-03',
+					resource: vscode.Uri.parse('joshbot-session://demo-session-03'),
 					label: 'JoshBot Demo Session 03',
 					status: vscode.ChatSessionStatus.InProgress
 				},
 				..._sessionItems,
 			];
 		}
-		async provideChatSessionContent(sessionId: string, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
+		async provideChatSessionContent(resource: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
+			const sessionId = resource.toString();
 			switch (sessionId) {
-				case 'demo-session-01':
-				case 'demo-session-02':
+				case 'joshbot-session://demo-session-01':
+				case 'joshbot-session://demo-session-02':
 					return completedChatSessionContent(sessionId);
-				case 'demo-session-03':
+				case 'joshbot-session://demo-session-03':
 					return inProgressChatSessionContent(sessionId);
 				default:
 					const existing = _chatSessions.get(sessionId);
@@ -86,13 +97,15 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
-		async provideHandleOptionsChange(sessionId: string, options: vscode.ChatSessionOptions, token: vscode.CancellationToken): Promise<void> {
+		async provideHandleOptionsChange(resource: vscode.Uri, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): Promise<void> {
+			const sessionId = resource.toString();
 			// Store the new options for this session
-			_sessionOptions.set(sessionId, options);
+			_sessionOptions.set(sessionId, updates);
 			
 			// Log the model change for debugging
-			if (options.model) {
-				console.log(`Session ${sessionId} model changed to: ${options.model.id} (${options.model.family})`);
+			const modelUpdate = updates.find(u => u.optionId === 'model');
+			if (modelUpdate) {
+				console.log(`Session ${sessionId} model changed to: ${modelUpdate.value}`);
 			}
 			
 			// Note: The session object will retrieve the new options from _sessionOptions Map
@@ -196,20 +209,21 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 
 	/* Exchange this untitled session for a 'real' session */
 	const count = _sessionItems.length + 1;
-	const newSessionId = `session-${count}`;
+	const newSessionId = `joshbot-session://session-${count}`;
 	const newSessionItem: vscode.ChatSessionItem = {
-		id: newSessionId,
+		resource: vscode.Uri.parse(newSessionId),
 		label: `JoshBot Session ${count}`,
 		status: vscode.ChatSessionStatus.Completed
 	};
 	_sessionItems.push(newSessionItem);
 	
 	// Transfer options from the untitled session to the new session
-	const untitledOptions = _sessionOptions.get(original.id);
+	const originalResourceStr = original.resource.toString();
+	const untitledOptions = _sessionOptions.get(originalResourceStr);
 	if (untitledOptions) {
 		_sessionOptions.set(newSessionId, untitledOptions);
 		// Clean up the untitled session options to avoid memory leaks
-		_sessionOptions.delete(original.id);
+		_sessionOptions.delete(originalResourceStr);
 	}
 	
 	_chatSessions.set(newSessionId, {
@@ -218,7 +232,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 			new vscode.ChatRequestTurn2('Create a new session', undefined, [], 'joshbot', [], []),
 			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
 		],
-		options: untitledOptions
+		options: untitledOptions ? convertUpdatesToOptions(untitledOptions) : undefined
 	});
 	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
 	onDidCommitChatSessionItemEmitter.fire({ original, modified: newSessionItem });
@@ -231,7 +245,8 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
 	
 	// Get stored options for this session, if any
-	const options = _sessionOptions.get(sessionId);
+	const updates = _sessionOptions.get(sessionId);
+	const options = updates ? convertUpdatesToOptions(updates) : undefined;
 	
 	return {
 		history: [
@@ -253,7 +268,8 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
 	
 	// Get stored options for this session, if any
-	const options = _sessionOptions.get(sessionId);
+	const updates = _sessionOptions.get(sessionId);
+	const options = updates ? convertUpdatesToOptions(updates) : undefined;
 	
 	return {
 		history: [
@@ -283,7 +299,8 @@ function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
 	
 	// Get stored options for this session, if any
-	const options = _sessionOptions.get(sessionId);
+	const updates = _sessionOptions.get(sessionId);
+	const options = updates ? convertUpdatesToOptions(updates) : undefined;
 	
 	return {
 		history: [

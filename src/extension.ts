@@ -14,6 +14,16 @@ const _sessionOptions: Map<string, Record<string, string>> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
+/**
+ * Helper function to extract session ID from a Uri resource.
+ * Handles cases where the path may or may not start with a slash.
+ */
+function extractSessionId(resource: vscode.Uri): string {
+	const path = resource.path;
+	// Remove leading slash if present
+	return path.startsWith('/') ? path.substring(1) : path;
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
@@ -70,7 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
 			];
 		}
 		async provideChatSessionContent(resource: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-			const sessionId = resource.path.substring(1); // Remove leading slash
+			const sessionId = extractSessionId(resource);
 			switch (sessionId) {
 				case 'demo-session-01':
 				case 'demo-session-02':
@@ -88,7 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		async provideHandleOptionsChange(resource: vscode.Uri, updates: readonly vscode.ChatSessionOptionUpdate[], token: vscode.CancellationToken): Promise<void> {
-			const sessionId = resource.path.substring(1); // Remove leading slash
+			const sessionId = extractSessionId(resource);
 			
 			// Get or create the options object for this session
 			let options = _sessionOptions.get(sessionId);
@@ -221,7 +231,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	_sessionItems.push(newSessionItem);
 	
 	// Transfer options from the untitled session to the new session
-	const untitledSessionId = original.resource.path.substring(1); // Remove leading slash
+	const untitledSessionId = extractSessionId(original.resource);
 	const untitledOptions = _sessionOptions.get(untitledSessionId);
 	if (untitledOptions) {
 		_sessionOptions.set(newSessionId, untitledOptions);

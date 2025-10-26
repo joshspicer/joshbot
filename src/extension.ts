@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		if (chatContext.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = chatContext.chatSessionContext;
-			// stream.markdown(`Good day! This is chat session '${original.id}'\n\n`);
+			// stream.markdown(`Good day! This is chat session '${original.resource.path.substring(1)}'\n\n`);
 			if (request.acceptedConfirmationData || request.rejectedConfirmationData) {
 				return handleConfirmationData(request, chatContext, stream, token);
 			}
@@ -278,7 +278,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
-			stream.progress(`\n\Still working\n`);
+			stream.progress(`\nStill working\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`2+2=...\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));

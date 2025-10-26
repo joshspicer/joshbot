@@ -14,6 +14,9 @@ const _sessionOptions: Map<string, Map<string, string | undefined>> = new Map();
 
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
+function extractSessionId(resource: vscode.Uri): string {
+	return resource.path.replace(/^\//, '');
+}
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
@@ -70,7 +73,7 @@ export function activate(context: vscode.ExtensionContext) {
 			];
 		}
 		async provideChatSessionContent(resource: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-			const sessionId = resource.path.replace(/^\//, '');
+			const sessionId = extractSessionId(resource);
 			switch (sessionId) {
 				case 'demo-session-01':
 				case 'demo-session-02':
@@ -88,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		async provideHandleOptionsChange(resource: vscode.Uri, updates: readonly vscode.ChatSessionOptionUpdate[], token: vscode.CancellationToken): Promise<void> {
-			const sessionId = resource.path.replace(/^\//, '');
+			const sessionId = extractSessionId(resource);
 			
 			// Get or create the options map for this session
 			let sessionOptionsMap = _sessionOptions.get(sessionId);
@@ -216,7 +219,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	_sessionItems.push(newSessionItem);
 	
 	// Transfer options from the untitled session to the new session
-	const originalSessionId = original.resource.path.replace(/^\//, '');
+	const originalSessionId = extractSessionId(original.resource);
 	const untitledOptions = _sessionOptions.get(originalSessionId);
 	if (untitledOptions) {
 		_sessionOptions.set(newSessionId, untitledOptions);
@@ -229,8 +232,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 		history: [
 			new vscode.ChatRequestTurn2('Create a new session', undefined, [], 'joshbot', [], []),
 			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
-		],
-		options: undefined
+		]
 	});
 	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
 	onDidCommitChatSessionItemEmitter.fire({ original, modified: newSessionItem });

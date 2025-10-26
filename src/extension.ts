@@ -176,6 +176,18 @@ function escapeMarkdown(value: string): string {
 	return value.replace(/[\\`*_{}\[\]()#+\-.!]/g, '\\$&');
 }
 
+/**
+ * Converts a Map of session options to a Record format expected by ChatSession.
+ * Filters out undefined values from the map.
+ */
+function convertOptionsMapToRecord(optionsMap: Map<string, string | undefined> | undefined): Record<string, string> | undefined {
+	if (!optionsMap) {
+		return undefined;
+	}
+	const entries = Array.from(optionsMap.entries()).filter(([_, v]) => v !== undefined) as [string, string][];
+	return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
+
 async function handleConfirmationData(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
 	const results: Array<{ step: string; accepted: boolean }> = [];
 	results.push(...(request.acceptedConfirmationData?.map(data => ({ step: data.step, accepted: true })) ?? []));
@@ -231,7 +243,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 			new vscode.ChatRequestTurn2('Create a new session', undefined, [], 'joshbot', [], []),
 			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
 		],
-		options: untitledOptions ? Object.fromEntries(Array.from(untitledOptions.entries()).filter(([_, v]) => v !== undefined)) as Record<string, string> : undefined
+		options: convertOptionsMapToRecord(untitledOptions)
 	});
 	/* Tell VS Code that we have created a new session and can replace this 'untitled' one with it */
 	onDidCommitChatSessionItemEmitter.fire({ original, modified: newSessionItem });
@@ -246,7 +258,7 @@ function completedChatSessionContent(resource: vscode.Uri): vscode.ChatSession {
 	
 	// Get stored options for this session, if any, and convert to the format expected by ChatSession
 	const optionsMap = _sessionOptions.get(sessionId);
-	const options = optionsMap ? Object.fromEntries(Array.from(optionsMap.entries()).filter(([_, v]) => v !== undefined)) as Record<string, string> : undefined;
+	const options = convertOptionsMapToRecord(optionsMap);
 	
 	return {
 		history: [
@@ -270,7 +282,7 @@ function inProgressChatSessionContent(resource: vscode.Uri): vscode.ChatSession 
 	
 	// Get stored options for this session, if any, and convert to the format expected by ChatSession
 	const optionsMap = _sessionOptions.get(sessionId);
-	const options = optionsMap ? Object.fromEntries(Array.from(optionsMap.entries()).filter(([_, v]) => v !== undefined)) as Record<string, string> : undefined;
+	const options = convertOptionsMapToRecord(optionsMap);
 	
 	return {
 		history: [
@@ -302,7 +314,7 @@ function untitledChatSessionContent(resource: vscode.Uri): vscode.ChatSession {
 	
 	// Get stored options for this session, if any, and convert to the format expected by ChatSession
 	const optionsMap = _sessionOptions.get(sessionId);
-	const options = optionsMap ? Object.fromEntries(Array.from(optionsMap.entries()).filter(([_, v]) => v !== undefined)) as Record<string, string> : undefined;
+	const options = convertOptionsMapToRecord(optionsMap);
 	
 	return {
 		history: [

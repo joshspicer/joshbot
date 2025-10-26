@@ -131,13 +131,15 @@ function optionsMapToRecord(optionsMap: Map<string, string | undefined> | undefi
 	}
 	
 	const result: Record<string, string> = {};
+	let hasValues = false;
 	for (const [key, value] of optionsMap.entries()) {
 		if (value !== undefined) {
 			result[key] = value;
+			hasValues = true;
 		}
 	}
 	
-	return Object.keys(result).length > 0 ? result : undefined;
+	return hasValues ? result : undefined;
 }
 
 async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscode.ExtensionContext | undefined, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
@@ -290,7 +292,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
-			stream.progress(`\n\Still working\n`);
+			stream.progress(`\nStill working\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`2+2=...\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));

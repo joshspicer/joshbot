@@ -70,7 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
 			];
 		}
 		async provideChatSessionContent(resource: vscode.Uri, token: vscode.CancellationToken): Promise<vscode.ChatSession> {
-			const sessionId = resource.path;
+			const sessionId = getSessionIdFromResource(resource);
 			switch (sessionId) {
 				case 'demo-session-01':
 				case 'demo-session-02':
@@ -88,7 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		async provideHandleOptionsChange(resource: vscode.Uri, updates: ReadonlyArray<vscode.ChatSessionOptionUpdate>, token: vscode.CancellationToken): Promise<void> {
-			const sessionId = resource.path;
+			const sessionId = getSessionIdFromResource(resource);
 			
 			// Get or create options map for this session
 			let optionsMap = _sessionOptions.get(sessionId);
@@ -177,13 +177,30 @@ function escapeMarkdown(value: string): string {
 	return value.replace(/[\\`*_{}\[\]()#+\-.!]/g, '\\$&');
 }
 
-function convertOptionsMapToObject(optionsMap: Map<string, string | undefined> | undefined): any {
+/**
+ * Extracts the session ID from a chat session resource URI.
+ * For joshbot URIs, the path component is used as the session ID.
+ * @param resource The URI of the chat session
+ * @returns The session ID string
+ */
+function getSessionIdFromResource(resource: vscode.Uri): string {
+	return resource.path;
+}
+
+/**
+ * Converts an options map to an object that can be used in ChatSession.
+ * @param optionsMap Map of option keys to values
+ * @returns An object with the options, or undefined if the map is empty
+ */
+function convertOptionsMapToObject(optionsMap: Map<string, string | undefined> | undefined): Record<string, string> | undefined {
 	if (!optionsMap || optionsMap.size === 0) {
 		return undefined;
 	}
-	const result: any = {};
+	const result: Record<string, string> = {};
 	for (const [key, value] of optionsMap.entries()) {
-		result[key] = value;
+		if (value !== undefined) {
+			result[key] = value;
+		}
 	}
 	return result;
 }
@@ -231,7 +248,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	_sessionItems.push(newSessionItem);
 	
 	// Transfer options from the untitled session to the new session
-	const originalSessionId = original.resource.path;
+	const originalSessionId = getSessionIdFromResource(original.resource);
 	const untitledOptions = _sessionOptions.get(originalSessionId);
 	if (untitledOptions) {
 		_sessionOptions.set(newSessionId, untitledOptions);

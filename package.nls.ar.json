@@ -1,0 +1,19 @@
+{
+  "displayName": "جوش بوت",
+  "description": "مساعد برمجة متخصص رائع في المهام المعقدة",
+  "command.hello.title": "مرحبا",
+  "command.hello.category": "جوش بوت",
+  "command.cloudButton.title": "زر السحابة",
+  "command.cloudButton.category": "جوش بوت",
+  "command.snake.title": "ثعبان!",
+  "command.snake.category": "جوش بوت",
+  "command.squirrel.title": "سنجاب!",
+  "command.squirrel.category": "جوش بوت",
+  "chatSession.displayName": "جوش بوت",
+  "chatSession.description": "مساعد برمجة متخصص رائع في المهام المعقدة",
+  "chatSession.command.secrets.description": "عرض قائمة مفاتيح الأسرار المخزنة",
+  "chatSession.command.setSecret.description": "تخزين سر: /set-secret <مفتاح> <قيمة>",
+  "configuration.contributeChatSessions.description": "تفعيل للمساهمة في جلسات الدردشة ومشارك الدردشة الديناميكي.",
+  "configuration.contributeCloudButton.description": "تفعيل للمساهمة بزر السحابة لجوش بوت.",
+  "remoteCodingAgent.displayName": "جوش بوت"
+}

@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import * as l10n from '@vscode/l10n';
 
 const CHAT_SESSION_TYPE = 'josh-bot';
 
@@ -31,16 +32,16 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 			if (isUntitled) {
 				/* Initial Untitled response */
-				stream.confirmation('New Chat Session', `Would you like to begin?\n\n`, { step: 'create' }, ['yes', 'no']);
+				stream.confirmation(l10n.t('New Chat Session'), l10n.t('Would you like to begin?\n\n'), { step: 'create' }, ['yes', 'no']);
 				return;
 
 			} else {
 				/* follow up */
-				stream.markdown(`Welcome back!`)
+				stream.markdown(l10n.t('Welcome back!'))
 			}
 		} else {
 			/*general query*/
-			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
+			stream.markdown(l10n.t('Howdy! I am joshbot, your friendly chat companion.'));
 		}
 	});
 	context.subscriptions.push(chatParticipant);
@@ -114,7 +115,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscode.ExtensionContext | undefined, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
 	if (!extContext) {
-		stream.warning('Extension context unavailable');
+		stream.warning(l10n.t('Extension context unavailable'));
 		return;
 	}
 
@@ -124,16 +125,16 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 	switch (command) {
 		case 'set-secret': {
 			if (parts.length < 2) {
-				stream.warning('Usage: /set-secret <key> <value>');
+				stream.warning(l10n.t('Usage: /set-secret <key> <value>'));
 				return;
 			}
 			const key = parts[0];
 			const value = parts.slice(1).join(' ');
 			try {
 				await extContext.secrets.store(key, value);
-				stream.markdown(`Stored secret **${escapeMarkdown(key)}** (value hidden).`);
+				stream.markdown(l10n.t('Stored secret **{0}** (value hidden).', escapeMarkdown(key)));
 			} catch (err: any) {
-				stream.warning(`Failed to store secret: ${err?.message ?? err}`);
+				stream.warning(l10n.t('Failed to store secret: {0}', err?.message ?? err));
 			}
 			return;
 		}
@@ -141,20 +142,20 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 			try {
 				const keys = await extContext.secrets.keys();
 				if (keys.length === 0) {
-					stream.markdown('No secrets stored. Use /set-secret <key> <value> to add one.');
+					stream.markdown(l10n.t('No secrets stored. Use /set-secret <key> <value> to add one.'));
 				} else {
-					stream.markdown('Stored secret keys:\n');
+					stream.markdown(l10n.t('Stored secret keys:\n'));
 					for (const k of keys) {
 						stream.markdown(`- ${escapeMarkdown(k)}\n`);
 					}
 				}
 			} catch (err: any) {
-				stream.warning(`Failed to read secrets: ${err?.message ?? err}`);
+				stream.warning(l10n.t('Failed to read secrets: {0}', err?.message ?? err));
 			}
 			return;
 		}
 		default:
-			stream.warning(`Unknown command: ${command}`);
+			stream.warning(l10n.t('Unknown command: {0}', command ?? ''));
 			return;
 	}
 }
@@ -173,7 +174,7 @@ async function handleConfirmationData(request: vscode.ChatRequest, context: vsco
 				await handleCreation(data.accepted, request, context, stream);
 				break;
 			default:
-				stream.markdown(`Unknown confirmation step: ${data.step}\n\n`);
+				stream.markdown(l10n.t('Unknown confirmation step: {0}\n\n', data.step));
 				break;
 		}
 	}
@@ -181,17 +182,17 @@ async function handleConfirmationData(request: vscode.ChatRequest, context: vsco
 
 async function handleCreation(accepted: boolean, request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream): Promise<void> {
 	if (!accepted) {
-		stream.warning(`New session was not created.\n\n`);
+		stream.warning(l10n.t('New session was not created.\n\n'));
 		return;
 	}
 
 	const original = context.chatSessionContext?.chatSessionItem;
 	if (!original || !context.chatSessionContext?.isUntitled) {
-		stream.warning(`Cannot create new session - this is not an untitled session!.\n\n`);
+		stream.warning(l10n.t('Cannot create new session - this is not an untitled session!.\n\n'));
 		return;
 	}
 
-	stream.progress(`Creating new session...\n\n`);
+	stream.progress(l10n.t('Creating new session...\n\n'));
 	await new Promise(resolve => setTimeout(resolve, 3000));
 
 	/* Exchange this untitled session for a 'real' session */
@@ -199,7 +200,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	const newSessionId = `session-${count}`;
 	const newSessionItem: vscode.ChatSessionItem = {
 		id: newSessionId,
-		label: `JoshBot Session ${count}`,
+		label: l10n.t('JoshBot Session {0}', count),
 		status: vscode.ChatSessionStatus.Completed
 	};
 	_sessionItems.push(newSessionItem);
@@ -215,8 +216,8 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	_chatSessions.set(newSessionId, {
 		requestHandler: undefined,
 		history: [
-			new vscode.ChatRequestTurn2('Create a new session', undefined, [], 'joshbot', [], []),
-			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
+			new vscode.ChatRequestTurn2(l10n.t('Create a new session'), undefined, [], 'joshbot', [], []),
+			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(l10n.t('This is the start of session {0}\n\n', count))], {}, 'joshbot') as vscode.ChatResponseTurn
 		],
 		options: untitledOptions
 	});
@@ -227,7 +228,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 
 function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
-	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
+	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(l10n.t('Session: {0}\n', sessionId)));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
 	
 	// Get stored options for this session, if any
@@ -235,7 +236,7 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 	
 	return {
 		history: [
-			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2(l10n.t('hello'), undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
@@ -249,7 +250,7 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 
 function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
-	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`));
+	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(l10n.t('Session: {0}\n', sessionId)));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
 	
 	// Get stored options for this session, if any
@@ -257,15 +258,15 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 	
 	return {
 		history: [
-			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2(l10n.t('hello'), undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
-			stream.progress(`\n\Still working\n`);
+			stream.progress(l10n.t('\n\Still working\n'));
 			await new Promise(resolve => setTimeout(resolve, 3000));
-			stream.markdown(`2+2=...\n`);
+			stream.markdown(l10n.t('2+2=...\n'));
 			await new Promise(resolve => setTimeout(resolve, 3000));
-			stream.markdown(`4!\n`);
+			stream.markdown(l10n.t('4!\n'));
 		},
 		requestHandler: undefined,
 		options: options,
@@ -278,8 +279,8 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 
 function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
-	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n\n`));
-	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`This is an untitled session. Send a message to begin our session.\n`));
+	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(l10n.t('Session: {0}\n\n', sessionId)));
+	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(l10n.t('This is an untitled session. Send a message to begin our session.\n')));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
 	
 	// Get stored options for this session, if any
@@ -287,7 +288,7 @@ function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 	
 	return {
 		history: [
-			new vscode.ChatRequestTurn2('Howdy', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2(l10n.t('Howdy'), undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,

@@ -1,7 +1,7 @@
 {
   "name": "joshbot",
-  "displayName": "जोश बॉट",
-  "description": "जटिल कार्यों में महान एक समर्पित कोडिंग सहायक",
+  "displayName": "Josh Bot",
+  "description": "A dedicated coding assistant great at complex tasks",
   "version": "1.3.0",
   "publisher": "spcr-test",
   "license": "MIT",
@@ -38,7 +38,7 @@
       {
         "id": "josh-bot",
         "name": "Josh Bot",
-        "displayName": "जोश बॉट",
+        "displayName": "Josh Bot",
         "command": "joshbot.cloudButton",
         "when": "config.joshbot.contributeCloudButton"
       }
@@ -47,17 +47,17 @@
       {
         "type": "josh-bot",
         "name": "joshbot",
-        "displayName": "जोश बॉट",
-        "description": "जटिल कार्यों में महान एक समर्पित कोडिंग सहायक",
+        "displayName": "Josh Bot",
+        "description": "A dedicated coding assistant great at complex tasks",
         "when": "config.joshbot.contributeChatSessions",
         "commands": [
           {
             "name": "secrets",
-            "description": "संग्रहीत गुप्त कुंजियों की सूची"
+            "description": "List stored secret keys"
           },
             {
               "name": "set-secret",
-              "description": "एक रहस्य संग्रहीत करें: /set-secret <key> <value>"
+              "description": "Store a secret: /set-secret <key> <value>"
             }
         ],
         "capabilities": {
@@ -68,23 +68,23 @@
     "commands": [
       {
         "command": "joshbot.hello",
-        "title": "नमस्ते",
+        "title": "Hello",
         "category": "JoshBot"
       },
       {
         "command": "joshbot.cloudButton",
-        "title": "क्लाउड बटन",
+        "title": "Cloud Button",
         "category": "JoshBot"
       },
       {
         "command": "joshbot.snake",
-        "title": "सांप!",
+        "title": "Snake!",
         "category": "JoshBot",
         "icon": "$(snake)"
       },
       {
         "command": "joshbot.squirrel",
-        "title": "गिलहरी!",
+        "title": "Squirrel!",
         "category": "JoshBot",
         "icon": "$(squirrel)"
       }
@@ -95,12 +95,12 @@
         "joshbot.contributeChatSessions": {
           "type": "boolean",
           "default": true,
-          "description": "चैट सत्र और एक गतिशील चैट प्रतिभागी का योगदान करने के लिए सक्षम करें।"
+          "description": "Enable to contribute chat sessions and a dynamic chat participant."
         },
         "joshbot.contributeCloudButton": {
           "type": "boolean",
           "default": true,
-          "description": "जोश बॉट के लिए क्लाउड बटन का योगदान करने के लिए सक्षम करें।"
+          "description": "Enable to contribute a cloud button for Josh Bot."
         }
       }
     },

@@ -15,7 +15,7 @@ const _sessionOptions: Map<string, vscode.ChatSessionOptions> = new Map();
 let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>;
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('JoshBot एक्सटेंशन अब सक्रिय है!');
+	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, chatContext, stream, token) => {
 		console.log(`chatUserPromptSummary: ${chatContext?.chatSummary?.prompt}`);
@@ -31,16 +31,16 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 			if (isUntitled) {
 				/* Initial Untitled response */
-				stream.confirmation('नया चैट सत्र', `क्या आप शुरू करना चाहेंगे?\n\n`, { step: 'create' }, ['yes', 'no']);
+				stream.confirmation('New Chat Session', `Would you like to begin?\n\n`, { step: 'create' }, ['yes', 'no']);
 				return;
 
 			} else {
 				/* follow up */
-				stream.markdown(`वापस स्वागत है!`)
+				stream.markdown(`Welcome back!`)
 			}
 		} else {
 			/*general query*/
-			stream.markdown(`नमस्ते! मैं जोशबॉट हूं, आपका मित्रवत चैट साथी।`);
+			stream.markdown(`Howdy! I am joshbot, your friendly chat companion.`);
 		}
 	});
 	context.subscriptions.push(chatParticipant);
@@ -53,17 +53,17 @@ export function activate(context: vscode.ExtensionContext) {
 			return [
 				{
 					id: 'demo-session-01',
-					label: 'जोशबॉट डेमो सत्र 01',
+					label: 'JoshBot Demo Session 01',
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
 					id: 'demo-session-02',
-					label: 'जोशबॉट डेमो सत्र 02',
+					label: 'JoshBot Demo Session 02',
 					status: vscode.ChatSessionStatus.Completed
 				},
 				{
 					id: 'demo-session-03',
-					label: 'जोशबॉट डेमो सत्र 03',
+					label: 'JoshBot Demo Session 03',
 					status: vscode.ChatSessionStatus.InProgress
 				},
 				..._sessionItems,
@@ -114,7 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscode.ExtensionContext | undefined, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
 	if (!extContext) {
-		stream.warning('एक्सटेंशन संदर्भ अनुपलब्ध');
+		stream.warning('Extension context unavailable');
 		return;
 	}
 
@@ -124,16 +124,16 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 	switch (command) {
 		case 'set-secret': {
 			if (parts.length < 2) {
-				stream.warning('उपयोग: /set-secret <key> <value>');
+				stream.warning('Usage: /set-secret <key> <value>');
 				return;
 			}
 			const key = parts[0];
 			const value = parts.slice(1).join(' ');
 			try {
 				await extContext.secrets.store(key, value);
-				stream.markdown(`रहस्य **${escapeMarkdown(key)}** संग्रहीत किया गया (मान छुपाया गया)।`);
+				stream.markdown(`Stored secret **${escapeMarkdown(key)}** (value hidden).`);
 			} catch (err: any) {
-				stream.warning(`रहस्य संग्रहीत करने में विफल: ${err?.message ?? err}`);
+				stream.warning(`Failed to store secret: ${err?.message ?? err}`);
 			}
 			return;
 		}
@@ -141,20 +141,20 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 			try {
 				const keys = await extContext.secrets.keys();
 				if (keys.length === 0) {
-					stream.markdown('कोई रहस्य संग्रहीत नहीं है। एक जोड़ने के लिए /set-secret <key> <value> का उपयोग करें।');
+					stream.markdown('No secrets stored. Use /set-secret <key> <value> to add one.');
 				} else {
-					stream.markdown('संग्रहीत रहस्य कुंजियां:\n');
+					stream.markdown('Stored secret keys:\n');
 					for (const k of keys) {
 						stream.markdown(`- ${escapeMarkdown(k)}\n`);
 					}
 				}
 			} catch (err: any) {
-				stream.warning(`रहस्य पढ़ने में विफल: ${err?.message ?? err}`);
+				stream.warning(`Failed to read secrets: ${err?.message ?? err}`);
 			}
 			return;
 		}
 		default:
-			stream.warning(`अज्ञात कमांड: ${command}`);
+			stream.warning(`Unknown command: ${command}`);
 			return;
 	}
 }
@@ -173,7 +173,7 @@ async function handleConfirmationData(request: vscode.ChatRequest, context: vsco
 				await handleCreation(data.accepted, request, context, stream);
 				break;
 			default:
-				stream.markdown(`अज्ञात पुष्टि चरण: ${data.step}\n\n`);
+				stream.markdown(`Unknown confirmation step: ${data.step}\n\n`);
 				break;
 		}
 	}
@@ -181,17 +181,17 @@ async function handleConfirmationData(request: vscode.ChatRequest, context: vsco
 
 async function handleCreation(accepted: boolean, request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream): Promise<void> {
 	if (!accepted) {
-		stream.warning(`नया सत्र नहीं बनाया गया।\n\n`);
+		stream.warning(`New session was not created.\n\n`);
 		return;
 	}
 
 	const original = context.chatSessionContext?.chatSessionItem;
 	if (!original || !context.chatSessionContext?.isUntitled) {
-		stream.warning(`नया सत्र नहीं बना सकते - यह एक अशीर्षक सत्र नहीं है!\n\n`);
+		stream.warning(`Cannot create new session - this is not an untitled session!.\n\n`);
 		return;
 	}
 
-	stream.progress(`नया सत्र बनाया जा रहा है...\n\n`);
+	stream.progress(`Creating new session...\n\n`);
 	await new Promise(resolve => setTimeout(resolve, 3000));
 
 	/* Exchange this untitled session for a 'real' session */
@@ -199,7 +199,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	const newSessionId = `session-${count}`;
 	const newSessionItem: vscode.ChatSessionItem = {
 		id: newSessionId,
-		label: `जोशबॉट सत्र ${count}`,
+		label: `JoshBot Session ${count}`,
 		status: vscode.ChatSessionStatus.Completed
 	};
 	_sessionItems.push(newSessionItem);
@@ -215,8 +215,8 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	_chatSessions.set(newSessionId, {
 		requestHandler: undefined,
 		history: [
-			new vscode.ChatRequestTurn2('नया सत्र बनाएं', undefined, [], 'joshbot', [], []),
-			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`यह सत्र ${count} की शुरुआत है\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
+			new vscode.ChatRequestTurn2('Create a new session', undefined, [], 'joshbot', [], []),
+			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
 		],
 		options: untitledOptions
 	});
@@ -235,7 +235,7 @@ function completedChatSessionContent(sessionId: string): vscode.ChatSession {
 	
 	return {
 		history: [
-			new vscode.ChatRequestTurn2('नमस्ते', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
@@ -257,11 +257,11 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 	
 	return {
 		history: [
-			new vscode.ChatRequestTurn2('नमस्ते', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
-			stream.progress(`\n\अभी भी काम कर रहा है\n`);
+			stream.progress(`\n\Still working\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
 			stream.markdown(`2+2=...\n`);
 			await new Promise(resolve => setTimeout(resolve, 3000));
@@ -279,7 +279,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 	const currentResponseParts: Array<vscode.ChatResponseMarkdownPart | vscode.ChatToolInvocationPart> = [];
 	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n\n`));
-	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`यह एक अशीर्षक सत्र है। हमारे सत्र की शुरुआत करने के लिए एक संदेश भेजें।\n`));
+	currentResponseParts.push(new vscode.ChatResponseMarkdownPart(`This is an untitled session. Send a message to begin our session.\n`));
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
 	
 	// Get stored options for this session, if any
@@ -287,7 +287,7 @@ function untitledChatSessionContent(sessionId: string): vscode.ChatSession {
 	
 	return {
 		history: [
-			new vscode.ChatRequestTurn2('नमस्ते', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2('Howdy', undefined, [], 'joshbot', [], []),
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,

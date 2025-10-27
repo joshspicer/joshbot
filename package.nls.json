@@ -1,0 +1,19 @@
+{
+  "displayName": "Josh Bot",
+  "description": "A dedicated coding assistant great at complex tasks",
+  "command.hello.title": "Hello",
+  "command.hello.category": "JoshBot",
+  "command.cloudButton.title": "Cloud Button",
+  "command.cloudButton.category": "JoshBot",
+  "command.snake.title": "Snake!",
+  "command.snake.category": "JoshBot",
+  "command.squirrel.title": "Squirrel!",
+  "command.squirrel.category": "JoshBot",
+  "chatSession.displayName": "Josh Bot",
+  "chatSession.description": "A dedicated coding assistant great at complex tasks",
+  "chatSession.command.secrets.description": "List stored secret keys",
+  "chatSession.command.setSecret.description": "Store a secret: /set-secret <key> <value>",
+  "configuration.contributeChatSessions.description": "Enable to contribute chat sessions and a dynamic chat participant.",
+  "configuration.contributeCloudButton.description": "Enable to contribute a cloud button for Josh Bot.",
+  "remoteCodingAgent.displayName": "Josh Bot"
+}

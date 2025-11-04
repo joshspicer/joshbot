@@ -87,6 +87,11 @@
         "title": "Squirrel!",
         "category": "JoshBot",
         "icon": "$(squirrel)"
+      },
+      {
+        "command": "joshbot.openTerminalCompletionPlayground",
+        "title": "Open Terminal Completion Playground",
+        "category": "JoshBot"
       }
     ],
     "configuration": {

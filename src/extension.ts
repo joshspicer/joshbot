@@ -14,16 +14,16 @@ const AVAILABLE_SUB_AGENTS: vscode.ChatSessionProviderOptionItem[] = [
 		name: 'Basic',
 	},
 	{
-		id: "summarizer",
-		name: "Summarizer",
+		id: 'summarizer',
+		name: 'Summarizer',
 	},
 	{
-		id: "code-helper",
-		name: "Code Helper",
+		id: 'code-helper',
+		name: 'Code Helper',
 	},
 	{
-		id: "research-assistant",
-		name: "Research Assistant",
+		id: 'research-assistant',
+		name: 'Research Assistant',
 	},
 ];
 

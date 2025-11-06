@@ -213,17 +213,19 @@ async function handleUserInput(request: vscode.ChatRequest, stream: vscode.ChatR
 		stream.markdown(`\n\nI see you've attached **${request.references.length}** file(s):\n\n`);
 		for (const ref of request.references) {
 			if (ref.id) {
-				// Handle different reference types
-				const value = ref.value as any;
+				// Handle different reference types using type guard
+				const value = ref.value;
 				if (value && typeof value === 'object' && 'uri' in value) {
-					const uri = value.uri as vscode.Uri;
+					const uri = (value as { uri: vscode.Uri }).uri;
 					const fileName = uri.path.split('/').pop() || uri.path;
 					stream.markdown(`- 📎 **${escapeMarkdown(fileName)}**\n`);
 					
-					// Try to read file content if it's a file reference
+					// Try to read file content if it's a text file
 					try {
 						const fileContent = await vscode.workspace.fs.readFile(uri);
-						const textContent = Buffer.from(fileContent).toString('utf-8');
+						// Use TextDecoder for safer UTF-8 decoding
+						const decoder = new TextDecoder('utf-8', { fatal: false });
+						const textContent = decoder.decode(fileContent);
 						const lineCount = textContent.split('\n').length;
 						const charCount = textContent.length;
 						stream.markdown(`  - Lines: ${lineCount}, Characters: ${charCount}\n`);
@@ -244,7 +246,12 @@ async function handleUserInput(request: vscode.ChatRequest, stream: vscode.ChatR
 		stream.markdown(`\nYou said: "${escapeMarkdown(userPrompt)}"\n\n`);
 		
 		// Check if the input appears to be unstructured/nonsensical
-		const isUnstructured = /^[a-z]{5,}$/i.test(userPrompt) || userPrompt.length < 3;
+		// Look for patterns: only random letters, very short input, or no spaces/words
+		const hasNoSpaces = !userPrompt.includes(' ');
+		const isRandomLetters = /^[a-z]+$/i.test(userPrompt) && userPrompt.length >= 8;
+		const isVeryShort = userPrompt.length <= 2;
+		const isUnstructured = (hasNoSpaces && isRandomLetters) || isVeryShort;
+		
 		if (isUnstructured) {
 			stream.markdown(`🤔 That seems like unstructured input. I'm here to help! Try asking me a question or describing what you'd like to do.\n\n`);
 		} else {

@@ -26,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 		console.log(`chatUserPromptSummary: ${chatContext?.chatSummary?.prompt}`);
 		console.log(`chatHistorySummary: ${chatContext?.chatSummary?.history}`);
 		if (request.command) {
-			return await handleSlashCommand(request, context, stream, token);
+			return await handleSlashCommand(request, context, chatContext, stream, token);
 		}
 		if (chatContext.chatSessionContext) {
 			const { isUntitled, chatSessionItem: original } = chatContext.chatSessionContext;
@@ -201,7 +201,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 }
 
-async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscode.ExtensionContext | undefined, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
+async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscode.ExtensionContext | undefined, chatContext: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
 	if (!extContext) {
 		stream.warning('Extension context unavailable');
 		return;
@@ -240,6 +240,56 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 			} catch (err: any) {
 				stream.warning(`Failed to read secrets: ${err?.message ?? err}`);
 			}
+			return;
+		}
+		case 'delegate': {
+			if (parts.length < 2) {
+				stream.warning('Usage: /delegate <sub-agent-id> <task description>');
+				return;
+			}
+			const subAgentId = parts[0];
+			const taskDescription = parts.slice(1).join(' ');
+			
+			// Validate sub-agent ID
+			const validSubAgents = ['basic', 'summarizer', 'code-helper', 'research-assistant'];
+			if (!validSubAgents.includes(subAgentId)) {
+				stream.warning(`Invalid sub-agent ID. Available sub-agents: ${validSubAgents.join(', ')}`);
+				return;
+			}
+			
+			// Get the current session context
+			const sessionContext = chatContext.chatSessionContext;
+			if (sessionContext) {
+				const sessionId = getSessionIdFromResource(sessionContext.chatSessionItem.resource);
+				// Update the sub-agent for this session
+				const subAgentOption = {
+					id: subAgentId,
+					name: subAgentId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+				};
+				_sessionSubAgent.set(sessionId, subAgentOption);
+			}
+			
+			stream.markdown(`✓ Task delegated to **${subAgentId}** sub-agent.\n\n`);
+			stream.markdown(`**Task:** ${escapeMarkdown(taskDescription)}\n\n`);
+			stream.progress(`Processing task with ${subAgentId} sub-agent...\n`);
+			
+			// Simulate processing based on sub-agent type
+			await new Promise(resolve => setTimeout(resolve, 1500));
+			
+			switch (subAgentId) {
+				case 'summarizer':
+					stream.markdown(`📝 **Summary:** The task has been analyzed and will be summarized by the Summarizer agent.\n`);
+					break;
+				case 'code-helper':
+					stream.markdown(`💻 **Code Analysis:** The Code Helper agent will assist with code-related aspects of this task.\n`);
+					break;
+				case 'research-assistant':
+					stream.markdown(`🔍 **Research:** The Research Assistant will gather information related to this task.\n`);
+					break;
+				default:
+					stream.markdown(`The Basic agent is now handling this task.\n`);
+			}
+			
 			return;
 		}
 		default:

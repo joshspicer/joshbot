@@ -58,6 +58,10 @@
             {
               "name": "set-secret",
               "description": "Store a secret: /set-secret <key> <value>"
+            },
+            {
+              "name": "delegate",
+              "description": "Delegate a task to a sub-agent: /delegate <sub-agent-id> <task description>"
             }
         ],
         "capabilities": {

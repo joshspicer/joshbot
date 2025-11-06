@@ -16,6 +16,12 @@ To run the tests locally:
 npm test
 ```
 
+On Linux systems running headless (e.g., CI environments), use:
+
+```bash
+npm run test:linux
+```
+
 This will:
 1. Compile the TypeScript code
 2. Run the linter
@@ -25,7 +31,7 @@ This will:
 ## Prerequisites
 
 - Node.js and npm installed
-- On Linux systems, you may need X11 or Xvfb for headless testing
+- On Linux headless systems, Xvfb is required (use `npm run test:linux`)
 - Internet connection to download VS Code on first run
 
 ## Writing Tests

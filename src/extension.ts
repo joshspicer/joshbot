@@ -7,6 +7,34 @@ import * as vscode from 'vscode';
 
 const CHAT_SESSION_TYPE = 'josh-bot';
 
+// Available sub-agents
+const AVAILABLE_SUB_AGENTS: vscode.ChatSessionProviderOptionItem[] = [
+	{
+		id: 'basic',
+		name: 'Basic',
+	},
+	{
+		id: "summarizer",
+		name: "Summarizer",
+	},
+	{
+		id: "code-helper",
+		name: "Code Helper",
+	},
+	{
+		id: "research-assistant",
+		name: "Research Assistant",
+	},
+];
+
+// Sub-agent response messages
+const SUB_AGENT_RESPONSES: Record<string, string> = {
+	'summarizer': '📝 **Summary:** The task has been analyzed and will be summarized by the Summarizer agent.\n',
+	'code-helper': '💻 **Code Analysis:** The Code Helper agent will assist with code-related aspects of this task.\n',
+	'research-assistant': '🔍 **Research:** The Research Assistant will gather information related to this task.\n',
+	'basic': 'The Basic agent is now handling this task.\n'
+};
+
 // Dynamically created sessions
 const _sessionItems: vscode.ChatSessionItem[] = [];
 const _chatSessions: Map<string, vscode.ChatSession> = new Map();
@@ -72,24 +100,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		];
 
-		availableSubAgent: vscode.ChatSessionProviderOptionItem[] = [
-			{
-				id: 'basic',
-				name: 'Basic',
-			},
-			{
-				id: "summarizer",
-				name: "Summarizer",
-			},
-			{
-				id: "code-helper",
-				name: "Code Helper",
-			},
-			{
-				id: "research-assistant",
-				name: "Research Assistant",
-			},
-		];
+		availableSubAgent: vscode.ChatSessionProviderOptionItem[] = AVAILABLE_SUB_AGENTS;
 
 		async provideChatSessionItems(token: vscode.CancellationToken): Promise<vscode.ChatSessionItem[]> {
 			return [
@@ -250,8 +261,8 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 			const subAgentId = parts[0];
 			const taskDescription = parts.slice(1).join(' ');
 			
-			// Validate sub-agent ID
-			const validSubAgents = ['basic', 'summarizer', 'code-helper', 'research-assistant'];
+			// Validate sub-agent ID using available sub-agents
+			const validSubAgents = AVAILABLE_SUB_AGENTS.map(sa => sa.id);
 			if (!validSubAgents.includes(subAgentId)) {
 				stream.warning(`Invalid sub-agent ID. Available sub-agents: ${validSubAgents.join(', ')}`);
 				return;
@@ -262,33 +273,22 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 			if (sessionContext) {
 				const sessionId = getSessionIdFromResource(sessionContext.chatSessionItem.resource);
 				// Update the sub-agent for this session
-				const subAgentOption = {
-					id: subAgentId,
-					name: subAgentId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-				};
-				_sessionSubAgent.set(sessionId, subAgentOption);
+				const subAgentOption = AVAILABLE_SUB_AGENTS.find(sa => sa.id === subAgentId);
+				if (subAgentOption) {
+					_sessionSubAgent.set(sessionId, subAgentOption);
+				}
 			}
 			
 			stream.markdown(`✓ Task delegated to **${subAgentId}** sub-agent.\n\n`);
 			stream.markdown(`**Task:** ${escapeMarkdown(taskDescription)}\n\n`);
 			stream.progress(`Processing task with ${subAgentId} sub-agent...\n`);
 			
-			// Simulate processing based on sub-agent type
-			await new Promise(resolve => setTimeout(resolve, 1500));
+			// Simulate processing
+			await new Promise(resolve => setTimeout(resolve, 1000));
 			
-			switch (subAgentId) {
-				case 'summarizer':
-					stream.markdown(`📝 **Summary:** The task has been analyzed and will be summarized by the Summarizer agent.\n`);
-					break;
-				case 'code-helper':
-					stream.markdown(`💻 **Code Analysis:** The Code Helper agent will assist with code-related aspects of this task.\n`);
-					break;
-				case 'research-assistant':
-					stream.markdown(`🔍 **Research:** The Research Assistant will gather information related to this task.\n`);
-					break;
-				default:
-					stream.markdown(`The Basic agent is now handling this task.\n`);
-			}
+			// Display agent-specific response
+			const response = SUB_AGENT_RESPONSES[subAgentId] || SUB_AGENT_RESPONSES['basic'];
+			stream.markdown(response);
 			
 			return;
 		}

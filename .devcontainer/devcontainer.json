@@ -1,4 +1,13 @@
 {
+  "_comment": [
+    "                      __",
+    "                     / _)",
+    "              .-^^^-/ /",
+    "           __/       /",
+    "          <__.|_|-|_|",
+    "",
+    " JoshBot - A dedicated coding assistant great at complex tasks"
+  ],
   "image": "mcr.microsoft.com/devcontainers/universal:2",
   "features": {
     "ghcr.io/joshspicer/features/mitm-proxy:1": {}

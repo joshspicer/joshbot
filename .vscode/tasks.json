@@ -1,4 +1,13 @@
 {
+    "_comment": [
+        "                      __",
+        "                     / _)",
+        "              .-^^^-/ /",
+        "           __/       /",
+        "          <__.|_|-|_|",
+        "",
+        " JoshBot - A dedicated coding assistant great at complex tasks"
+    ],
     "version": "2.0.0",
     "tasks": [
         {

@@ -1,13 +1,4 @@
 {
-  "_comment": [
-    "                      __",
-    "                     / _)",
-    "              .-^^^-/ /",
-    "           __/       /",
-    "          <__.|_|-|_|",
-    "",
-    " JoshBot - A dedicated coding assistant great at complex tasks"
-  ],
   "name": "joshbot",
   "displayName": "Josh Bot",
   "description": "A dedicated coding assistant great at complex tasks",

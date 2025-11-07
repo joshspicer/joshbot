@@ -22,4 +22,3 @@ export default [
 		ignores: ["out/**", "dist/**", "**/*.d.ts"],
 	}
 ];
-

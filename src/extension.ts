@@ -22,9 +22,33 @@ let onDidCommitChatSessionItemEmitter: vscode.EventEmitter<{ original: vscode.Ch
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
+
+	// Register commands
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.hello', () => {
+			vscode.window.showInformationMessage('Hello from JoshBot!');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.cloudButton', () => {
+			vscode.window.showInformationMessage('JoshBot Cloud Button clicked!');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.snake', () => {
+			vscode.window.showInformationMessage('🐍 Snake!');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.squirrel', () => {
+			vscode.window.showInformationMessage('🐿️ Squirrel!');
+		})
+	);
+
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, chatContext, stream, token) => {
-		console.log(`chatUserPromptSummary: ${chatContext?.chatSummary?.prompt}`);
-		console.log(`chatHistorySummary: ${chatContext?.chatSummary?.history}`);
 		if (request.command) {
 			return await handleSlashCommand(request, context, stream, token);
 		}

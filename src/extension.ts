@@ -64,6 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
 				);
 				item.status = vscode.ChatSessionStatus.Completed;
 				item.timing = { created: Date.now() - d.age };
+				item.iconPath = new vscode.ThemeIcon('squirrel');
 				items.push(item);
 			}
 
@@ -86,6 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
 		);
 		item.status = vscode.ChatSessionStatus.Completed;
 		item.timing = { created: Date.now() };
+		item.iconPath = new vscode.ThemeIcon('squirrel');
 		return item;
 	};
 

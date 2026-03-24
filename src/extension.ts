@@ -23,8 +23,8 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 	onDidCommitChatSessionItemEmitter = new vscode.EventEmitter<{ original: vscode.ChatSessionItem; modified: vscode.ChatSessionItem; }>();
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, chatContext, stream, token) => {
-		console.log(`chatUserPromptSummary: ${chatContext?.chatSummary?.prompt}`);
-		console.log(`chatHistorySummary: ${chatContext?.chatSummary?.history}`);
+		console.log(`chatUserPromptSummary: ${(chatContext as any)?.chatSummary?.prompt}`);
+		console.log(`chatHistorySummary: ${(chatContext as any)?.chatSummary?.history}`);
 		if (request.command) {
 			return await handleSlashCommand(request, context, stream, token);
 		}
@@ -303,7 +303,7 @@ async function handleCreation(accepted: boolean, request: vscode.ChatRequest, co
 	_chatSessions.set(newSessionId, {
 		requestHandler: undefined,
 		history: [
-			new vscode.ChatRequestTurn2('Create a new session', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2('Create a new session', undefined, [], 'joshbot', [], [], undefined, undefined, undefined),
 			new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`This is the start of session ${count}\n\n`)], {}, 'joshbot') as vscode.ChatResponseTurn
 		]
 		,
@@ -325,7 +325,7 @@ function completedChatSessionContent(sessionId: string, showOptions?: boolean): 
 	const currentSubAgent = _sessionSubAgent.get(sessionId);
 	return {
 		history: [
-			new vscode.ChatRequestTurn2(`hello. Using model: ${currentModel?.name}`, undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2(`hello. Using model: ${currentModel?.name}`, undefined, [], 'joshbot', [], [], undefined, undefined, undefined),
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,
@@ -346,7 +346,7 @@ function inProgressChatSessionContent(sessionId: string): vscode.ChatSession {
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
 	return {
 		history: [
-			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2('hello', undefined, [], 'joshbot', [], [], undefined, undefined, undefined),
 			response2 as vscode.ChatResponseTurn
 		],
 		activeResponseCallback: async (stream, token) => {
@@ -375,7 +375,7 @@ function untitledChatSessionContent(sessionId: string, showOptions?: boolean): v
 	const response2 = new vscode.ChatResponseTurn2(currentResponseParts, {}, 'joshbot');
 	return {
 		history: [
-			new vscode.ChatRequestTurn2('Howdy', undefined, [], 'joshbot', [], []),
+			new vscode.ChatRequestTurn2('Howdy', undefined, [], 'joshbot', [], [], undefined, undefined, undefined),
 			response2 as vscode.ChatResponseTurn
 		],
 		requestHandler: undefined,

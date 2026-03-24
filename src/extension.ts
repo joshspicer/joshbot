@@ -72,10 +72,14 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 	context.subscriptions.push(controller);
 
+	// Track which sessions were created by the controller (not demos)
+	const _createdSessions = new Set<string>();
+
 	// Handle new session creation
 	controller.newChatSessionItemHandler = async (ctx) => {
 		_sessionCount++;
 		const sessionId = `session-${_sessionCount}`;
+		_createdSessions.add(sessionId);
 		const item = controller.createChatSessionItem(
 			vscode.Uri.from({ scheme: CHAT_SESSION_TYPE, path: `/${sessionId}` }),
 			ctx.request.prompt || `JoshBot Session ${_sessionCount}`,
@@ -86,6 +90,8 @@ export function activate(context: vscode.ExtensionContext) {
 	};
 
 	// ── Content Provider ──────────────────────────────────────────────
+	const demoIds = new Set(['demo-01', 'demo-02', 'demo-03']);
+
 	context.subscriptions.push(
 		vscode.chat.registerChatSessionContentProvider(CHAT_SESSION_TYPE, {
 			async provideChatSessionContent(resource, token) {
@@ -98,16 +104,28 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 
 				const model = _sessionModel.get(sessionId);
+				const options = {
+					[MODELS_OPTION_ID]: model?.id ?? 'joshbot-basic',
+					[SUB_AGENT_OPTION_ID]: _sessionSubAgent.get(sessionId)?.id ?? 'basic',
+				};
+
+				// Demo sessions get pre-filled history
+				if (demoIds.has(sessionId)) {
+					return {
+						history: [
+							new vscode.ChatRequestTurn2(`hello (model: ${model?.name})`, undefined, [], 'joshbot', [], [], undefined, undefined, undefined),
+							new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`)], {}, 'joshbot') as vscode.ChatResponseTurn,
+						],
+						requestHandler: undefined,
+						options,
+					};
+				}
+
+				// New and untitled sessions start with empty history
 				return {
-					history: [
-						new vscode.ChatRequestTurn2(`hello (model: ${model?.name})`, undefined, [], 'joshbot', [], [], undefined, undefined, undefined),
-						new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`)], {}, 'joshbot') as vscode.ChatResponseTurn,
-					],
+					history: [],
 					requestHandler: undefined,
-					options: {
-						[MODELS_OPTION_ID]: model?.id ?? 'joshbot-basic',
-						[SUB_AGENT_OPTION_ID]: _sessionSubAgent.get(sessionId)?.id ?? 'basic',
-					},
+					options,
 				};
 			},
 

@@ -50,6 +50,7 @@
         "name": "joshbot",
         "displayName": "Josh Bot",
         "description": "A dedicated coding assistant great at complex tasks",
+        "icon": "$(squirrel)",
         "when": "config.joshbot.contributeChatSessions",
         "commands": [
           {

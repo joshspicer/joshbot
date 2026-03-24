@@ -96,22 +96,26 @@ export function activate(context: vscode.ExtensionContext) {
 				{
 					label: 'JoshBot Demo Session 01',
 					resource: vscode.Uri.from({ scheme: CHAT_SESSION_TYPE, path: '/demo-with-options-01' }),
-					status: vscode.ChatSessionStatus.Completed
+					status: vscode.ChatSessionStatus.Completed,
+					timing: { created: Date.now() - 1000 * 60 * 30 },
 				},
 				{
 					label: 'JoshBot Demo Session 02',
 					resource: vscode.Uri.from({ scheme: CHAT_SESSION_TYPE, path: '/demo-with-options-02' }),
-					status: vscode.ChatSessionStatus.Completed
+					status: vscode.ChatSessionStatus.Completed,
+					timing: { created: Date.now() - 1000 * 60 * 60 * 2 },
 				},
 				{
 					label: 'JoshBot Demo Session 03 (no options shown)',
 					resource: vscode.Uri.from({ scheme: CHAT_SESSION_TYPE, path: '/demo-no-options-03' }),
-					status: vscode.ChatSessionStatus.Completed
+					status: vscode.ChatSessionStatus.Completed,
+					timing: { created: Date.now() - 1000 * 60 * 60 * 24 },
 				},
 				{
 					label: 'JoshBot Demo Session 04',
 					resource: vscode.Uri.from({ scheme: CHAT_SESSION_TYPE, path: '/demo-with-options-04' }),
-					status: vscode.ChatSessionStatus.InProgress
+					status: vscode.ChatSessionStatus.InProgress,
+					timing: { created: Date.now() - 1000 * 60 * 5 },
 				},
 				..._sessionItems,
 			];

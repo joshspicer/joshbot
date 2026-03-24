@@ -416,16 +416,16 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 	private readonly _disposables: vscode.Disposable[] = [];
 
 	constructor() {
-		// Watch .joshbot/ for changes
-		const pattern = new vscode.RelativePattern(
-			vscode.workspace.workspaceFolders?.[0] ?? '',
-			`${JOSHBOT_FOLDER}/**`
-		);
-		this._watcher = vscode.workspace.createFileSystemWatcher(pattern);
-		this._disposables.push(this._watcher);
-		this._watcher.onDidCreate(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
-		this._watcher.onDidDelete(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
-		this._watcher.onDidChange(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
+		// Watch .joshbot/ for changes (only if a workspace is open)
+		const root = vscode.workspace.workspaceFolders?.[0];
+		if (root) {
+			const pattern = new vscode.RelativePattern(root, `${JOSHBOT_FOLDER}/**`);
+			this._watcher = vscode.workspace.createFileSystemWatcher(pattern);
+			this._disposables.push(this._watcher);
+			this._watcher.onDidCreate(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
+			this._watcher.onDidDelete(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
+			this._watcher.onDidChange(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
+		}
 	}
 
 	async provideCustomizations(token: vscode.CancellationToken): Promise<vscode.ChatSessionCustomizationItemGroup[]> {

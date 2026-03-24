@@ -1,12 +1,32 @@
 #!/usr/bin/env bash
 # Populates a .joshbot/ folder with randomly named demo customization files.
-# Usage: ./seed-customizations.sh [target-dir]
+# Usage: ./seed-customizations.sh [--force] [target-dir]
 #   target-dir defaults to the current directory.
+#   --force: delete existing .joshbot/ folder before seeding.
 
 set -e
 
-TARGET="${1:-.}"
+FORCE=false
+TARGET="."
+
+for arg in "$@"; do
+  case "$arg" in
+    --force) FORCE=true ;;
+    *) TARGET="$arg" ;;
+  esac
+done
+
 BASE="$TARGET/.joshbot"
+
+if [ -d "$BASE" ]; then
+  if [ "$FORCE" = true ]; then
+    echo "Removing existing $BASE..."
+    rm -rf "$BASE"
+  else
+    echo "Error: $BASE already exists. Use --force to delete and re-seed." >&2
+    exit 1
+  fi
+fi
 
 mkdir -p "$BASE/agents" "$BASE/skills" "$BASE/instructions" "$BASE/prompts"
 
@@ -23,7 +43,7 @@ for i in $(seq 1 3); do
 ---
 description: Agent $N — a demo agent created by seed script
 tools:
-  - codebase
+  - search/codebase
 ---
 
 You are **$N**, a helpful coding agent.
@@ -36,6 +56,7 @@ for i in $(seq 1 2); do
   mkdir -p "$BASE/skills/$N"
   cat > "$BASE/skills/$N/SKILL.md" <<EOF
 ---
+name: $N
 description: Skill $N — a demo skill created by seed script
 ---
 

@@ -47,7 +47,7 @@
     "chatSessions": [
       {
         "type": "josh-bot",
-        "name": "joshbot",
+        "name": "josh-bot",
         "displayName": "Josh Bot",
         "description": "A dedicated coding assistant great at complex tasks",
         "icon": "$(squirrel)",

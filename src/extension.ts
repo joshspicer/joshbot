@@ -239,7 +239,6 @@ export function deactivate() {}
  * - Item commands (Open, Inspect)
  * - Custom icons on items
  * - File watchers for dynamic updates
- * - resolveCustomizationDeletion for workspace items
  */
 class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsProvider, vscode.Disposable {
 	private readonly _onDidChangeCustomizations = new vscode.EventEmitter<void>();
@@ -366,14 +365,6 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		return groups;
 	}
 
-	async resolveCustomizationDeletion(item: vscode.ChatSessionCustomizationItem, _token: vscode.CancellationToken): Promise<void> {
-		if (item.storageLocation === vscode.ChatSessionCustomizationStorageLocation.BuiltIn) {
-			vscode.window.showWarningMessage('Built-in items cannot be deleted.');
-			return;
-		}
-		await vscode.workspace.fs.delete(item.uri);
-		// File watcher fires onDidChangeCustomizations automatically
-	}
 
 	private async _findWorkspaceFiles(subfolder: string, glob: string, icon: vscode.ThemeIcon): Promise<vscode.ChatSessionCustomizationItem[]> {
 		const root = vscode.workspace.workspaceFolders?.[0];

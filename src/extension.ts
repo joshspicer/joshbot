@@ -73,14 +73,10 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 	context.subscriptions.push(controller);
 
-	// Track which sessions were created by the controller (not demos)
-	const _createdSessions = new Set<string>();
-
 	// Handle new session creation
 	controller.newChatSessionItemHandler = async (ctx) => {
 		_sessionCount++;
 		const sessionId = `session-${_sessionCount}`;
-		_createdSessions.add(sessionId);
 		const item = controller.createChatSessionItem(
 			vscode.Uri.from({ scheme: CHAT_SESSION_TYPE, path: `/${sessionId}` }),
 			ctx.request.prompt || `JoshBot Session ${_sessionCount}`,
@@ -171,14 +167,22 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 			if (parts.length < 2) { stream.warning('Usage: /set-secret <key> <value>'); return; }
 			const key = parts[0];
 			const value = parts.slice(1).join(' ');
-			await extContext.secrets.store(key, value);
-			stream.markdown(`Stored secret **${key}** (value hidden).`);
+			try {
+				await extContext.secrets.store(key, value);
+				stream.markdown(`Stored secret **${key}** (value hidden).`);
+			} catch (err: any) {
+				stream.warning(`Failed to store secret: ${err?.message ?? err}`);
+			}
 			return;
 		}
 		case 'secrets': {
-			const keys = await extContext.secrets.keys();
-			if (keys.length === 0) { stream.markdown('No secrets stored.'); }
-			else { stream.markdown('Stored secret keys:\n' + keys.map(k => `- ${k}\n`).join('')); }
+			try {
+				const keys = await extContext.secrets.keys();
+				if (keys.length === 0) { stream.markdown('No secrets stored.'); }
+				else { stream.markdown('Stored secret keys:\n' + keys.map(k => `- ${k}\n`).join('')); }
+			} catch (err: any) {
+				stream.warning(`Failed to read secrets: ${err?.message ?? err}`);
+			}
 			return;
 		}
 		default:

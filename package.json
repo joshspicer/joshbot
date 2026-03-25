@@ -11,6 +11,7 @@
   "enabledApiProposals": [
     "chatSessionsProvider",
     "chatSessionCustomizations",
+    "chatPromptFiles",
     "chatParticipantAdditions",
     "chatParticipantPrivate",
     "remoteCodingAgents",

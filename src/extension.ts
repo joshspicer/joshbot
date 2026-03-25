@@ -266,6 +266,11 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		userWatcher.onDidCreate(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
 		userWatcher.onDidDelete(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
 		userWatcher.onDidChange(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
+
+		// Re-curate when global customizations change (other extensions' agents/skills/instructions)
+		this._disposables.push(vscode.chat.onDidChangeCustomAgents(() => this._onDidChangeCustomizations.fire()));
+		this._disposables.push(vscode.chat.onDidChangeSkills(() => this._onDidChangeCustomizations.fire()));
+		this._disposables.push(vscode.chat.onDidChangeInstructions(() => this._onDidChangeCustomizations.fire()));
 	}
 
 	async provideCustomizations(_token: vscode.CancellationToken): Promise<vscode.ChatSessionCustomizationItemGroup[]> {
@@ -276,10 +281,18 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 			{ command: 'joshbot.inspectItem', title: 'Inspect' },
 		];
 
+		// ── Pull globally-discovered items via chatPromptFiles API ────
+		// These come from other extensions, workspace .github/ files, etc.
+		// JoshBot curates: blesses up to 3 from each category.
+		const globalAgents = this._resourceToItems(vscode.chat.customAgents, new vscode.ThemeIcon('copilot'));
+		const globalSkills = this._resourceToItems(vscode.chat.skills, new vscode.ThemeIcon('lightbulb'));
+		const globalInstructions = this._resourceToItems(vscode.chat.instructions, new vscode.ThemeIcon('book'));
+
 		// ── Agents ────────────────────────────────────────────────────
 		const agents = [
 			...await this._findWorkspaceFiles('agents', '**/*.agent.md', new vscode.ThemeIcon('snake')),
 			...await this._findUserFiles('agents', '**/*.agent.md', new vscode.ThemeIcon('snake')),
+			...globalAgents.slice(0, 3),
 		];
 		groups.push({
 			id: vscode.ChatSessionCustomizationType.Agents,
@@ -292,6 +305,7 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		const skills = [
 			...await this._findWorkspaceFiles('skills', '**/SKILL.md', new vscode.ThemeIcon('lightbulb')),
 			...await this._findUserFiles('skills', '**/SKILL.md', new vscode.ThemeIcon('lightbulb')),
+			...globalSkills.slice(0, 3),
 		];
 		groups.push({
 			id: vscode.ChatSessionCustomizationType.Skills,
@@ -303,6 +317,7 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		const agentInstructions = [
 			...await this._findWorkspaceFiles('instructions', '**/*.instructions.md', new vscode.ThemeIcon('book')),
 			...await this._findUserFiles('instructions', '**/*.instructions.md', new vscode.ThemeIcon('book')),
+			...globalInstructions.slice(0, 3),
 		];
 		groups.push({
 			id: vscode.ChatSessionCustomizationType.AgentInstructions,
@@ -311,7 +326,6 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		});
 
 		// ── Context Instructions (auto-loaded by pattern) ─────────────
-		// Built-in context instruction that applies to TypeScript files
 		const contextInstructions: vscode.ChatSessionCustomizationItem[] = [{
 			id: 'builtin-ts-style',
 			label: 'TypeScript Style Guide',
@@ -345,7 +359,6 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		const prompts = [
 			...await this._findWorkspaceFiles('prompts', '**/*.prompt.md', new vscode.ThemeIcon('bookmark')),
 			...await this._findUserFiles('prompts', '**/*.prompt.md', new vscode.ThemeIcon('bookmark')),
-			// Built-in prompt
 			{
 				id: 'builtin-explain',
 				label: 'Explain Code',
@@ -363,6 +376,24 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		});
 
 		return groups;
+	}
+
+	/** Convert ChatResource[] from chatPromptFiles API to customization items. */
+	private _resourceToItems(resources: readonly vscode.ChatResource[], icon: vscode.ThemeIcon): vscode.ChatSessionCustomizationItem[] {
+		return resources.map(r => {
+			const filename = r.uri.path.split('/').pop() ?? '';
+			const name = filename
+				.replace(/\.(agent|instructions|prompt)\.md$/, '')
+				.replace(/^SKILL$/, 'skill') || 'untitled';
+			return {
+				id: `global:${r.uri.toString()}`,
+				label: name,
+				description: `${filename} (global)`,
+				uri: r.uri,
+				storageLocation: vscode.ChatSessionCustomizationStorageLocation.Extension,
+				icon,
+			};
+		});
 	}
 
 

@@ -412,10 +412,11 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 	/** Convert ChatResource[] from chatPromptFiles API to customization items. */
 	private _resourceToItems(resources: readonly vscode.ChatResource[], icon: vscode.ThemeIcon): vscode.ChatSessionCustomizationItem[] {
 		return resources.map(r => {
-			const filename = r.uri.path.split('/').pop() ?? '';
-			const name = filename
-				.replace(/\.(agent|instructions|prompt)\.md$/, '')
-				.replace(/^SKILL$/, 'skill') || 'untitled';
+			const parts = r.uri.path.split('/');
+			const filename = parts.pop() ?? '';
+			const name = filename === 'SKILL.md'
+				? (parts.pop() ?? 'skill')
+				: (filename.replace(/\.(agent|instructions|prompt)\.md$/, '') || 'untitled');
 			return {
 				id: `global:${r.uri.toString()}`,
 				label: name,
@@ -442,10 +443,12 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		const pattern = new vscode.RelativePattern(base, glob);
 		const files = await vscode.workspace.findFiles(pattern);
 		return files.map(uri => {
-			const filename = uri.path.split('/').pop() ?? '';
-			const name = filename
-				.replace(/\.(agent|instructions|prompt)\.md$/, '')
-				.replace(/^SKILL$/, base.path.split('/').pop() ?? 'skill');
+			const parts = uri.path.split('/');
+			const filename = parts.pop() ?? '';
+			// For SKILL.md, use the parent folder name (e.g. brave-raven/SKILL.md → brave-raven)
+			const name = filename === 'SKILL.md'
+				? (parts.pop() ?? 'skill')
+				: filename.replace(/\.(agent|instructions|prompt)\.md$/, '');
 			return { id: uri.toString(), label: name, description: filename, uri, storageLocation: storage, icon };
 		});
 	}

@@ -55,15 +55,27 @@ export function activate(context: vscode.ExtensionContext) {
 			await vscode.workspace.fs.writeFile(uri, Buffer.from(`---\ndescription: ${name} prompt\n---\n\nPlease ${name} the code.\n`));
 			await vscode.commands.executeCommand('vscode.open', uri);
 		}),
-		vscode.commands.registerCommand('joshbot.openItem', async (itemId: string, itemUri: string) => {
-			const uri = vscode.Uri.parse(itemUri);
+		vscode.commands.registerCommand('joshbot.openItem', async (itemId: string, itemUri: vscode.Uri | string) => {
+			const uri = itemUri instanceof vscode.Uri ? itemUri : vscode.Uri.parse(itemUri);
+			if (uri.scheme === 'joshbot-builtin') {
+				vscode.window.showInformationMessage(`Built-in item: ${uri.path}`);
+				return;
+			}
 			await vscode.commands.executeCommand('vscode.open', uri);
 		}),
-		vscode.commands.registerCommand('joshbot.inspectItem', async (itemId: string, itemUri: string) => {
-			const uri = vscode.Uri.parse(itemUri);
-			const content = await vscode.workspace.fs.readFile(uri);
-			const preview = Buffer.from(content).toString('utf8').slice(0, 200);
-			vscode.window.showInformationMessage(`${path.basename(uri.path)}: ${preview}...`);
+		vscode.commands.registerCommand('joshbot.inspectItem', async (itemId: string, itemUri: vscode.Uri | string) => {
+			const uri = itemUri instanceof vscode.Uri ? itemUri : vscode.Uri.parse(itemUri);
+			if (uri.scheme === 'joshbot-builtin') {
+				vscode.window.showInformationMessage(`Built-in: ${uri.path.slice(1)} (no file on disk)`);
+				return;
+			}
+			try {
+				const content = await vscode.workspace.fs.readFile(uri);
+				const preview = Buffer.from(content).toString('utf8').slice(0, 200);
+				vscode.window.showInformationMessage(`${path.basename(uri.path)}: ${preview}...`);
+			} catch {
+				vscode.window.showWarningMessage(`Cannot read: ${uri.path}`);
+			}
 		}),
 	);
 

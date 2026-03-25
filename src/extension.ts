@@ -324,8 +324,8 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 			id: vscode.ChatSessionCustomizationType.Agents,
 			items: agents,
 			commands: [
-				{ command: 'joshbot.newAgent', title: 'New Agent (Workspace)' },
-				{ command: 'joshbot.newUserAgent', title: 'New Agent (User)' },
+				{ command: 'joshbot.newAgent', title: 'New Workspace JoshBot Agent' },
+				{ command: 'joshbot.newUserAgent', title: 'New User JoshBot Agent' },
 			],
 			itemCommands,
 		});
@@ -339,7 +339,7 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		groups.push({
 			id: vscode.ChatSessionCustomizationType.Skills,
 			items: skills,
-			commands: [{ command: 'joshbot.newSkill', title: 'New Skill' }],
+			commands: [{ command: 'joshbot.newSkill', title: 'New Workspace JoshBot Skill' }],
 			itemCommands,
 		});
 
@@ -352,7 +352,7 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		groups.push({
 			id: vscode.ChatSessionCustomizationType.AgentInstructions,
 			items: agentInstructions,
-			commands: [{ command: 'joshbot.newInstruction', title: 'New Instruction' }],
+			commands: [{ command: 'joshbot.newInstruction', title: 'New Workspace JoshBot Instruction' }],
 			itemCommands,
 		});
 
@@ -402,7 +402,7 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		groups.push({
 			id: vscode.ChatSessionCustomizationType.Prompts,
 			items: prompts,
-			commands: [{ command: 'joshbot.newPrompt', title: 'New Prompt' }],
+			commands: [{ command: 'joshbot.newPrompt', title: 'New Workspace JoshBot Prompt' }],
 			itemCommands,
 		});
 

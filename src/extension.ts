@@ -46,6 +46,25 @@ export function activate(context: vscode.ExtensionContext) {
 			await vscode.workspace.fs.writeFile(uri, Buffer.from(`---\ndescription: ${name} agent\ntools:\n  - search/codebase\n---\n\nYou are **${name}**, a helpful agent.\n`));
 			await vscode.commands.executeCommand('vscode.open', uri);
 		}),
+		vscode.commands.registerCommand('joshbot.newSkill', async () => {
+			const name = await vscode.window.showInputBox({ prompt: 'Skill name', placeHolder: 'my-skill' });
+			if (!name) { return; }
+			const root = vscode.workspace.workspaceFolders?.[0];
+			if (!root) { vscode.window.showWarningMessage('Open a workspace first'); return; }
+			const dir = vscode.Uri.joinPath(root.uri, JOSHBOT_FOLDER, 'skills', name);
+			const uri = vscode.Uri.joinPath(dir, 'SKILL.md');
+			await vscode.workspace.fs.writeFile(uri, Buffer.from(`---\nname: ${name}\ndescription: ${name} skill\n---\n\n# ${name}\n\nThis skill does amazing things.\n`));
+			await vscode.commands.executeCommand('vscode.open', uri);
+		}),
+		vscode.commands.registerCommand('joshbot.newInstruction', async () => {
+			const name = await vscode.window.showInputBox({ prompt: 'Instruction name', placeHolder: 'my-rules' });
+			if (!name) { return; }
+			const root = vscode.workspace.workspaceFolders?.[0];
+			if (!root) { vscode.window.showWarningMessage('Open a workspace first'); return; }
+			const uri = vscode.Uri.joinPath(root.uri, JOSHBOT_FOLDER, 'instructions', `${name}.instructions.md`);
+			await vscode.workspace.fs.writeFile(uri, Buffer.from(`---\ndescription: ${name} instructions\n---\n\nFollow the ${name} guidelines.\n`));
+			await vscode.commands.executeCommand('vscode.open', uri);
+		}),
 		vscode.commands.registerCommand('joshbot.newPrompt', async () => {
 			const name = await vscode.window.showInputBox({ prompt: 'Prompt name', placeHolder: 'my-prompt' });
 			if (!name) { return; }
@@ -53,6 +72,13 @@ export function activate(context: vscode.ExtensionContext) {
 			if (!root) { vscode.window.showWarningMessage('Open a workspace first'); return; }
 			const uri = vscode.Uri.joinPath(root.uri, JOSHBOT_FOLDER, 'prompts', `${name}.prompt.md`);
 			await vscode.workspace.fs.writeFile(uri, Buffer.from(`---\ndescription: ${name} prompt\n---\n\nPlease ${name} the code.\n`));
+			await vscode.commands.executeCommand('vscode.open', uri);
+		}),
+		vscode.commands.registerCommand('joshbot.newUserAgent', async () => {
+			const name = await vscode.window.showInputBox({ prompt: 'User agent name', placeHolder: 'my-global-agent' });
+			if (!name) { return; }
+			const uri = vscode.Uri.file(path.join(USER_JOSHBOT_DIR, 'agents', `${name}.agent.md`));
+			await vscode.workspace.fs.writeFile(uri, Buffer.from(`---\ndescription: ${name} user agent\ntools:\n  - search/codebase\n---\n\nYou are **${name}**, a global agent.\n`));
 			await vscode.commands.executeCommand('vscode.open', uri);
 		}),
 		vscode.commands.registerCommand('joshbot.openItem', async (itemId: string, itemUri: vscode.Uri | string) => {
@@ -297,7 +323,10 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		groups.push({
 			id: vscode.ChatSessionCustomizationType.Agents,
 			items: agents,
-			commands: [{ command: 'joshbot.newAgent', title: 'New JoshBot Agent' }],
+			commands: [
+				{ command: 'joshbot.newAgent', title: 'New Agent (Workspace)' },
+				{ command: 'joshbot.newUserAgent', title: 'New Agent (User)' },
+			],
 			itemCommands,
 		});
 
@@ -310,6 +339,7 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		groups.push({
 			id: vscode.ChatSessionCustomizationType.Skills,
 			items: skills,
+			commands: [{ command: 'joshbot.newSkill', title: 'New Skill' }],
 			itemCommands,
 		});
 
@@ -322,6 +352,7 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		groups.push({
 			id: vscode.ChatSessionCustomizationType.AgentInstructions,
 			items: agentInstructions,
+			commands: [{ command: 'joshbot.newInstruction', title: 'New Instruction' }],
 			itemCommands,
 		});
 
@@ -371,7 +402,7 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 		groups.push({
 			id: vscode.ChatSessionCustomizationType.Prompts,
 			items: prompts,
-			commands: [{ command: 'joshbot.newPrompt', title: 'New JoshBot Prompt' }],
+			commands: [{ command: 'joshbot.newPrompt', title: 'New Prompt' }],
 			itemCommands,
 		});
 

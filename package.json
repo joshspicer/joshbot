@@ -93,12 +93,27 @@
       },
       {
         "command": "joshbot.newAgent",
-        "title": "New Agent",
+        "title": "New Agent (Workspace)",
+        "category": "JoshBot"
+      },
+      {
+        "command": "joshbot.newSkill",
+        "title": "New Skill (Workspace)",
+        "category": "JoshBot"
+      },
+      {
+        "command": "joshbot.newInstruction",
+        "title": "New Instruction (Workspace)",
         "category": "JoshBot"
       },
       {
         "command": "joshbot.newPrompt",
-        "title": "New Prompt",
+        "title": "New Prompt (Workspace)",
+        "category": "JoshBot"
+      },
+      {
+        "command": "joshbot.newUserAgent",
+        "title": "New Agent (User)",
         "category": "JoshBot"
       },
       {

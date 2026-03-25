@@ -89,6 +89,26 @@
         "title": "Squirrel!",
         "category": "JoshBot",
         "icon": "$(squirrel)"
+      },
+      {
+        "command": "joshbot.newAgent",
+        "title": "New Agent",
+        "category": "JoshBot"
+      },
+      {
+        "command": "joshbot.newPrompt",
+        "title": "New Prompt",
+        "category": "JoshBot"
+      },
+      {
+        "command": "joshbot.openItem",
+        "title": "Open",
+        "category": "JoshBot"
+      },
+      {
+        "command": "joshbot.inspectItem",
+        "title": "Inspect",
+        "category": "JoshBot"
       }
     ],
     "configuration": {

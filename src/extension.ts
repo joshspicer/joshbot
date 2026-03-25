@@ -4,6 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import * as os from 'os';
+import * as path from 'path';
 
 const CHAT_SESSION_TYPE = 'josh-bot';
 const MODELS_OPTION_ID = 'model';
@@ -13,6 +15,9 @@ const _sessionModel = new Map<string, vscode.ChatSessionProviderOptionItem | und
 const _sessionSubAgent = new Map<string, vscode.ChatSessionProviderOptionItem | undefined>();
 
 let _sessionCount = 0;
+
+const JOSHBOT_FOLDER = '.joshbot';
+const USER_JOSHBOT_DIR = path.join(os.homedir(), JOSHBOT_FOLDER);
 
 const availableModels: vscode.ChatSessionProviderOptionItem[] = [
 	{ id: 'joshbot-basic', name: 'JoshBot Basic', default: true },
@@ -30,6 +35,38 @@ const availableSubAgents: vscode.ChatSessionProviderOptionItem[] = [
 export function activate(context: vscode.ExtensionContext) {
 	console.log('JoshBot extension is now active!');
 
+	// ── Commands ──────────────────────────────────────────────────────
+	context.subscriptions.push(
+		vscode.commands.registerCommand('joshbot.newAgent', async () => {
+			const name = await vscode.window.showInputBox({ prompt: 'Agent name', placeHolder: 'my-agent' });
+			if (!name) { return; }
+			const root = vscode.workspace.workspaceFolders?.[0];
+			if (!root) { vscode.window.showWarningMessage('Open a workspace first'); return; }
+			const uri = vscode.Uri.joinPath(root.uri, JOSHBOT_FOLDER, 'agents', `${name}.agent.md`);
+			await vscode.workspace.fs.writeFile(uri, Buffer.from(`---\ndescription: ${name} agent\ntools:\n  - search/codebase\n---\n\nYou are **${name}**, a helpful agent.\n`));
+			await vscode.commands.executeCommand('vscode.open', uri);
+		}),
+		vscode.commands.registerCommand('joshbot.newPrompt', async () => {
+			const name = await vscode.window.showInputBox({ prompt: 'Prompt name', placeHolder: 'my-prompt' });
+			if (!name) { return; }
+			const root = vscode.workspace.workspaceFolders?.[0];
+			if (!root) { vscode.window.showWarningMessage('Open a workspace first'); return; }
+			const uri = vscode.Uri.joinPath(root.uri, JOSHBOT_FOLDER, 'prompts', `${name}.prompt.md`);
+			await vscode.workspace.fs.writeFile(uri, Buffer.from(`---\ndescription: ${name} prompt\n---\n\nPlease ${name} the code.\n`));
+			await vscode.commands.executeCommand('vscode.open', uri);
+		}),
+		vscode.commands.registerCommand('joshbot.openItem', async (itemId: string, itemUri: string) => {
+			const uri = vscode.Uri.parse(itemUri);
+			await vscode.commands.executeCommand('vscode.open', uri);
+		}),
+		vscode.commands.registerCommand('joshbot.inspectItem', async (itemId: string, itemUri: string) => {
+			const uri = vscode.Uri.parse(itemUri);
+			const content = await vscode.workspace.fs.readFile(uri);
+			const preview = Buffer.from(content).toString('utf8').slice(0, 200);
+			vscode.window.showInformationMessage(`${path.basename(uri.path)}: ${preview}...`);
+		}),
+	);
+
 	// ── Chat Participant ──────────────────────────────────────────────
 	const chatParticipant = vscode.chat.createChatParticipant(CHAT_SESSION_TYPE, async (request, chatContext, stream, token) => {
 		if (request.command) {
@@ -44,14 +81,11 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(chatParticipant);
 
-	// ── Session Controller (replaces deprecated registerChatSessionItemProvider) ──
+	// ── Session Controller ────────────────────────────────────────────
 	const controller = vscode.chat.createChatSessionItemController(
 		CHAT_SESSION_TYPE,
 		async (_token) => {
-			// Refresh handler: rebuild the items collection
 			const items: vscode.ChatSessionItem[] = [];
-
-			// Demo sessions
 			const demos = [
 				{ id: 'demo-01', label: 'JoshBot Demo Session 01', age: 30 * 60 * 1000 },
 				{ id: 'demo-02', label: 'JoshBot Demo Session 02', age: 2 * 60 * 60 * 1000 },
@@ -67,13 +101,11 @@ export function activate(context: vscode.ExtensionContext) {
 				item.iconPath = new vscode.ThemeIcon('snake');
 				items.push(item);
 			}
-
 			controller.items.replace(items);
 		},
 	);
 	context.subscriptions.push(controller);
 
-	// Handle new session creation
 	controller.newChatSessionItemHandler = async (ctx) => {
 		_sessionCount++;
 		const sessionId = `session-${_sessionCount}`;
@@ -94,12 +126,8 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.chat.registerChatSessionContentProvider(CHAT_SESSION_TYPE, {
 			async provideChatSessionContent(resource, token) {
 				const sessionId = getSessionIdFromResource(resource);
-				if (!_sessionModel.get(sessionId)) {
-					_sessionModel.set(sessionId, availableModels[0]);
-				}
-				if (!_sessionSubAgent.get(sessionId)) {
-					_sessionSubAgent.set(sessionId, availableSubAgents[0]);
-				}
+				if (!_sessionModel.get(sessionId)) { _sessionModel.set(sessionId, availableModels[0]); }
+				if (!_sessionSubAgent.get(sessionId)) { _sessionSubAgent.set(sessionId, availableSubAgents[0]); }
 
 				const model = _sessionModel.get(sessionId);
 				const options = {
@@ -107,24 +135,18 @@ export function activate(context: vscode.ExtensionContext) {
 					[SUB_AGENT_OPTION_ID]: _sessionSubAgent.get(sessionId)?.id ?? 'basic',
 				};
 
-				// Demo sessions get pre-filled history
 				if (demoIds.has(sessionId)) {
 					return {
 						history: [
-							new vscode.ChatRequestTurn2(`hello (model: ${model?.name})`, undefined, [], 'joshbot', [], [], undefined, undefined, undefined),
-							new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`)], {}, 'joshbot') as vscode.ChatResponseTurn,
+							new vscode.ChatRequestTurn2(`hello (model: ${model?.name})`, undefined, [], 'josh-bot', [], [], undefined, undefined, undefined),
+							new vscode.ChatResponseTurn2([new vscode.ChatResponseMarkdownPart(`Session: ${sessionId}\n`)], {}, 'josh-bot') as vscode.ChatResponseTurn,
 						],
 						requestHandler: undefined,
 						options,
 					};
 				}
 
-				// New and untitled sessions start with empty history
-				return {
-					history: [],
-					requestHandler: undefined,
-					options,
-				};
+				return { history: [], requestHandler: undefined, options };
 			},
 
 			async provideChatSessionProviderOptions(_token) {
@@ -151,7 +173,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	// ── Customizations Provider ───────────────────────────────────────
-	const customizationsProvider = new JoshBotCustomizationsProvider();
+	const customizationsProvider = new JoshBotCustomizationsProvider(context);
 	context.subscriptions.push(
 		vscode.chat.registerChatSessionCustomizationsProvider(CHAT_SESSION_TYPE, customizationsProvider)
 	);
@@ -165,11 +187,9 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 	switch (request.command) {
 		case 'set-secret': {
 			if (parts.length < 2) { stream.warning('Usage: /set-secret <key> <value>'); return; }
-			const key = parts[0];
-			const value = parts.slice(1).join(' ');
 			try {
-				await extContext.secrets.store(key, value);
-				stream.markdown(`Stored secret **${key}** (value hidden).`);
+				await extContext.secrets.store(parts[0], parts.slice(1).join(' '));
+				stream.markdown(`Stored secret **${parts[0]}** (value hidden).`);
 			} catch (err: any) {
 				stream.warning(`Failed to store secret: ${err?.message ?? err}`);
 			}
@@ -194,76 +214,174 @@ export function deactivate() {}
 
 // ── Customizations Provider ───────────────────────────────────────────────
 
-const JOSHBOT_FOLDER = '.joshbot';
-
 /**
- * Discovers customization items from a `.joshbot/` folder in the workspace.
+ * Discovers customization items from multiple sources:
+ * - Workspace: `.joshbot/` folder in the workspace
+ * - User: `~/.joshbot/` folder (user-level customizations)
+ * - BuiltIn: hardcoded items shipped with the extension
  *
- * Layout:
- *   .joshbot/
- *     agents/       → *.agent.md files
- *     skills/       → SKILL.md files
- *     instructions/ → *.instructions.md files
- *     prompts/      → *.prompt.md files
+ * Exercises ALL API features:
+ * - Multiple storage locations (Workspace, User, BuiltIn)
+ * - All customization types (Agents, Skills, all instruction types, Prompts)
+ * - Group commands (New Agent, New Prompt)
+ * - Item commands (Open, Inspect)
+ * - Custom icons on items
+ * - File watchers for dynamic updates
+ * - resolveCustomizationDeletion for workspace items
  */
 class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsProvider, vscode.Disposable {
 	private readonly _onDidChangeCustomizations = new vscode.EventEmitter<void>();
 	readonly onDidChangeCustomizations = this._onDidChangeCustomizations.event;
-
-	private _watcher: vscode.FileSystemWatcher | undefined;
 	private readonly _disposables: vscode.Disposable[] = [];
 
-	constructor() {
+	constructor(private readonly _context: vscode.ExtensionContext) {
+		// Watch workspace .joshbot/
 		const root = vscode.workspace.workspaceFolders?.[0];
 		if (root) {
-			const pattern = new vscode.RelativePattern(root, `${JOSHBOT_FOLDER}/**`);
-			this._watcher = vscode.workspace.createFileSystemWatcher(pattern);
-			this._disposables.push(this._watcher);
-			this._watcher.onDidCreate(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
-			this._watcher.onDidDelete(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
-			this._watcher.onDidChange(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
+			const watcher = vscode.workspace.createFileSystemWatcher(
+				new vscode.RelativePattern(root, `${JOSHBOT_FOLDER}/**`)
+			);
+			this._disposables.push(watcher);
+			watcher.onDidCreate(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
+			watcher.onDidDelete(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
+			watcher.onDidChange(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
 		}
+
+		// Watch user ~/.joshbot/
+		const userWatcher = vscode.workspace.createFileSystemWatcher(
+			new vscode.RelativePattern(vscode.Uri.file(USER_JOSHBOT_DIR), '**')
+		);
+		this._disposables.push(userWatcher);
+		userWatcher.onDidCreate(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
+		userWatcher.onDidDelete(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
+		userWatcher.onDidChange(() => this._onDidChangeCustomizations.fire(), undefined, this._disposables);
 	}
 
 	async provideCustomizations(_token: vscode.CancellationToken): Promise<vscode.ChatSessionCustomizationItemGroup[]> {
 		const groups: vscode.ChatSessionCustomizationItemGroup[] = [];
 
-		const agents = await this._findFiles('agents', '**/*.agent.md');
-		if (agents.length > 0) {
-			groups.push({ id: vscode.ChatSessionCustomizationType.Agents, items: agents, commands: [{ command: 'joshbot.hello', title: 'New JoshBot Agent' }] });
-		}
+		const itemCommands: vscode.Command[] = [
+			{ command: 'joshbot.openItem', title: 'Open' },
+			{ command: 'joshbot.inspectItem', title: 'Inspect' },
+		];
 
-		const skills = await this._findFiles('skills', '**/SKILL.md');
-		if (skills.length > 0) {
-			groups.push({ id: vscode.ChatSessionCustomizationType.Skills, items: skills });
-		}
+		// ── Agents ────────────────────────────────────────────────────
+		const agents = [
+			...await this._findWorkspaceFiles('agents', '**/*.agent.md', new vscode.ThemeIcon('snake')),
+			...await this._findUserFiles('agents', '**/*.agent.md', new vscode.ThemeIcon('snake')),
+		];
+		groups.push({
+			id: vscode.ChatSessionCustomizationType.Agents,
+			items: agents,
+			commands: [{ command: 'joshbot.newAgent', title: 'New JoshBot Agent' }],
+			itemCommands,
+		});
 
-		const instructions = await this._findFiles('instructions', '**/*.instructions.md');
-		if (instructions.length > 0) {
-			groups.push({ id: vscode.ChatSessionCustomizationType.AgentInstructions, items: instructions });
-		}
+		// ── Skills ────────────────────────────────────────────────────
+		const skills = [
+			...await this._findWorkspaceFiles('skills', '**/SKILL.md', new vscode.ThemeIcon('lightbulb')),
+			...await this._findUserFiles('skills', '**/SKILL.md', new vscode.ThemeIcon('lightbulb')),
+		];
+		groups.push({
+			id: vscode.ChatSessionCustomizationType.Skills,
+			items: skills,
+			itemCommands,
+		});
 
-		const prompts = await this._findFiles('prompts', '**/*.prompt.md');
-		if (prompts.length > 0) {
-			groups.push({ id: vscode.ChatSessionCustomizationType.Prompts, items: prompts });
-		}
+		// ── Agent Instructions (always loaded) ────────────────────────
+		const agentInstructions = [
+			...await this._findWorkspaceFiles('instructions', '**/*.instructions.md', new vscode.ThemeIcon('book')),
+			...await this._findUserFiles('instructions', '**/*.instructions.md', new vscode.ThemeIcon('book')),
+		];
+		groups.push({
+			id: vscode.ChatSessionCustomizationType.AgentInstructions,
+			items: agentInstructions,
+			itemCommands,
+		});
+
+		// ── Context Instructions (auto-loaded by pattern) ─────────────
+		// Built-in context instruction that applies to TypeScript files
+		const contextInstructions: vscode.ChatSessionCustomizationItem[] = [{
+			id: 'builtin-ts-style',
+			label: 'TypeScript Style Guide',
+			description: 'Auto-applied to *.ts files',
+			uri: vscode.Uri.parse(`joshbot-builtin://instructions/ts-style`),
+			storageLocation: vscode.ChatSessionCustomizationStorageLocation.BuiltIn,
+			icon: new vscode.ThemeIcon('file-code'),
+		}];
+		groups.push({
+			id: vscode.ChatSessionCustomizationType.ContextInstructions,
+			items: contextInstructions,
+			itemCommands,
+		});
+
+		// ── On-Demand Instructions ────────────────────────────────────
+		const onDemandInstructions: vscode.ChatSessionCustomizationItem[] = [{
+			id: 'builtin-security-review',
+			label: 'Security Review Checklist',
+			description: 'Invoke manually for security audits',
+			uri: vscode.Uri.parse(`joshbot-builtin://instructions/security-review`),
+			storageLocation: vscode.ChatSessionCustomizationStorageLocation.BuiltIn,
+			icon: new vscode.ThemeIcon('shield'),
+		}];
+		groups.push({
+			id: vscode.ChatSessionCustomizationType.OnDemandInstructions,
+			items: onDemandInstructions,
+			itemCommands,
+		});
+
+		// ── Prompts ───────────────────────────────────────────────────
+		const prompts = [
+			...await this._findWorkspaceFiles('prompts', '**/*.prompt.md', new vscode.ThemeIcon('bookmark')),
+			...await this._findUserFiles('prompts', '**/*.prompt.md', new vscode.ThemeIcon('bookmark')),
+			// Built-in prompt
+			{
+				id: 'builtin-explain',
+				label: 'Explain Code',
+				description: 'Built-in prompt to explain selected code',
+				uri: vscode.Uri.parse(`joshbot-builtin://prompts/explain`),
+				storageLocation: vscode.ChatSessionCustomizationStorageLocation.BuiltIn,
+				icon: new vscode.ThemeIcon('comment-discussion'),
+			},
+		];
+		groups.push({
+			id: vscode.ChatSessionCustomizationType.Prompts,
+			items: prompts,
+			commands: [{ command: 'joshbot.newPrompt', title: 'New JoshBot Prompt' }],
+			itemCommands,
+		});
 
 		return groups;
 	}
 
 	async resolveCustomizationDeletion(item: vscode.ChatSessionCustomizationItem, _token: vscode.CancellationToken): Promise<void> {
+		if (item.storageLocation === vscode.ChatSessionCustomizationStorageLocation.BuiltIn) {
+			vscode.window.showWarningMessage('Built-in items cannot be deleted.');
+			return;
+		}
 		await vscode.workspace.fs.delete(item.uri);
+		// File watcher fires onDidChangeCustomizations automatically
 	}
 
-	private async _findFiles(subfolder: string, glob: string): Promise<vscode.ChatSessionCustomizationItem[]> {
+	private async _findWorkspaceFiles(subfolder: string, glob: string, icon: vscode.ThemeIcon): Promise<vscode.ChatSessionCustomizationItem[]> {
 		const root = vscode.workspace.workspaceFolders?.[0];
 		if (!root) { return []; }
-		const pattern = new vscode.RelativePattern(vscode.Uri.joinPath(root.uri, JOSHBOT_FOLDER, subfolder), glob);
+		return this._scanDir(vscode.Uri.joinPath(root.uri, JOSHBOT_FOLDER, subfolder), glob, vscode.ChatSessionCustomizationStorageLocation.Workspace, icon);
+	}
+
+	private async _findUserFiles(subfolder: string, glob: string, icon: vscode.ThemeIcon): Promise<vscode.ChatSessionCustomizationItem[]> {
+		return this._scanDir(vscode.Uri.file(path.join(USER_JOSHBOT_DIR, subfolder)), glob, vscode.ChatSessionCustomizationStorageLocation.User, icon);
+	}
+
+	private async _scanDir(base: vscode.Uri, glob: string, storage: vscode.ChatSessionCustomizationStorageLocation, icon: vscode.ThemeIcon): Promise<vscode.ChatSessionCustomizationItem[]> {
+		const pattern = new vscode.RelativePattern(base, glob);
 		const files = await vscode.workspace.findFiles(pattern);
 		return files.map(uri => {
 			const filename = uri.path.split('/').pop() ?? '';
-			const name = filename.replace(/\.(agent|instructions|prompt)\.md$/, '').replace(/^SKILL$/, subfolder);
-			return { id: uri.toString(), label: name, description: filename, uri, storageLocation: vscode.ChatSessionCustomizationStorageLocation.Workspace };
+			const name = filename
+				.replace(/\.(agent|instructions|prompt)\.md$/, '')
+				.replace(/^SKILL$/, base.path.split('/').pop() ?? 'skill');
+			return { id: uri.toString(), label: name, description: filename, uri, storageLocation: storage, icon };
 		});
 	}
 

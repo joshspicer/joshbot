@@ -211,7 +211,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	// ── Customizations Provider ───────────────────────────────────────
-	const customizationsProvider = new JoshBotCustomizationsProvider(context);
+	const customizationsProvider = new JoshBotCustomizationsProvider();
 	context.subscriptions.push(
 		vscode.chat.registerCustomizationProvider('joshbot', {
 			label: 'JoshBot',
@@ -273,7 +273,7 @@ class JoshBotCustomizationsProvider implements vscode.ChatCustomizationProvider,
 	readonly onDidChange = this._onDidChange.event;
 	private readonly _disposables: vscode.Disposable[] = [];
 
-	constructor(private readonly _context: vscode.ExtensionContext) {
+	constructor() {
 		// Watch workspace .joshbot/
 		const root = vscode.workspace.workspaceFolders?.[0];
 		if (root) {

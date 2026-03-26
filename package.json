@@ -10,7 +10,7 @@
 	},
 	"enabledApiProposals": [
 		"chatSessionsProvider",
-		"chatCustomizationProvider",
+		"chatSessionCustomizationProvider",
 		"chatPromptFiles",
 		"chatParticipantAdditions",
 		"chatParticipantPrivate",

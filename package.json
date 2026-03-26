@@ -152,6 +152,33 @@
 					"command": "joshbot.snake",
 					"when": "chatSessionType == josh-bot"
 				}
+			],
+			"AICustomizationManagementCreate": [
+				{
+					"command": "joshbot.newAgent",
+					"when": "aiCustomizationManagementSection == agents",
+					"group": "joshbot"
+				},
+				{
+					"command": "joshbot.newUserAgent",
+					"when": "aiCustomizationManagementSection == agents",
+					"group": "joshbot"
+				},
+				{
+					"command": "joshbot.newSkill",
+					"when": "aiCustomizationManagementSection == skills",
+					"group": "joshbot"
+				},
+				{
+					"command": "joshbot.newInstruction",
+					"when": "aiCustomizationManagementSection == instructions",
+					"group": "joshbot"
+				},
+				{
+					"command": "joshbot.newPrompt",
+					"when": "aiCustomizationManagementSection == prompts",
+					"group": "joshbot"
+				}
 			]
 		}
 	},

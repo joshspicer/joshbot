@@ -81,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
 			await vscode.workspace.fs.writeFile(uri, Buffer.from(`---\ndescription: ${name} user agent\ntools:\n  - search/codebase\n---\n\nYou are **${name}**, a global agent.\n`));
 			await vscode.commands.executeCommand('vscode.open', uri);
 		}),
-		vscode.commands.registerCommand('joshbot.openItem', async (itemId: string, itemUri: vscode.Uri | string) => {
+		vscode.commands.registerCommand('joshbot.openItem', async (itemUri: vscode.Uri | string) => {
 			const uri = itemUri instanceof vscode.Uri ? itemUri : vscode.Uri.parse(itemUri);
 			if (uri.scheme === 'joshbot-builtin') {
 				vscode.window.showInformationMessage(`Built-in item: ${uri.path}`);
@@ -89,7 +89,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 			await vscode.commands.executeCommand('vscode.open', uri);
 		}),
-		vscode.commands.registerCommand('joshbot.inspectItem', async (itemId: string, itemUri: vscode.Uri | string) => {
+		vscode.commands.registerCommand('joshbot.inspectItem', async (itemUri: vscode.Uri | string) => {
 			const uri = itemUri instanceof vscode.Uri ? itemUri : vscode.Uri.parse(itemUri);
 			if (uri.scheme === 'joshbot-builtin') {
 				vscode.window.showInformationMessage(`Built-in: ${uri.path.slice(1)} (no file on disk)`);
@@ -248,7 +248,7 @@ async function handleSlashCommand(request: vscode.ChatRequest, extContext: vscod
 	}
 }
 
-export function deactivate() {}
+export function deactivate() { }
 
 // ── Customizations Provider ───────────────────────────────────────────────
 
@@ -358,7 +358,6 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 
 		// ── Context Instructions (auto-loaded by pattern) ─────────────
 		const contextInstructions: vscode.ChatSessionCustomizationItem[] = [{
-			id: 'builtin-ts-style',
 			label: 'TypeScript Style Guide',
 			description: 'Auto-applied to *.ts files',
 			uri: vscode.Uri.parse(`joshbot-builtin://instructions/ts-style`),
@@ -373,7 +372,6 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 
 		// ── On-Demand Instructions ────────────────────────────────────
 		const onDemandInstructions: vscode.ChatSessionCustomizationItem[] = [{
-			id: 'builtin-security-review',
 			label: 'Security Review Checklist',
 			description: 'Invoke manually for security audits',
 			uri: vscode.Uri.parse(`joshbot-builtin://instructions/security-review`),
@@ -391,7 +389,6 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 			...await this._findWorkspaceFiles('prompts', '**/*.prompt.md', new vscode.ThemeIcon('bookmark')),
 			...await this._findUserFiles('prompts', '**/*.prompt.md', new vscode.ThemeIcon('bookmark')),
 			{
-				id: 'builtin-explain',
 				label: 'Explain Code',
 				description: 'Built-in prompt to explain selected code',
 				uri: vscode.Uri.parse(`joshbot-builtin://prompts/explain`),
@@ -418,7 +415,6 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 				? (parts.pop() ?? 'skill')
 				: (filename.replace(/\.(agent|instructions|prompt)\.md$/, '') || 'untitled');
 			return {
-				id: `global:${r.uri.toString()}`,
 				label: name,
 				description: `${filename} (global)`,
 				uri: r.uri,
@@ -449,7 +445,7 @@ class JoshBotCustomizationsProvider implements vscode.ChatSessionCustomizationsP
 			const name = filename === 'SKILL.md'
 				? (parts.pop() ?? 'skill')
 				: filename.replace(/\.(agent|instructions|prompt)\.md$/, '');
-			return { id: uri.toString(), label: name, description: filename, uri, storageLocation: storage, icon };
+			return { label: name, description: filename, uri, storageLocation: storage, icon };
 		});
 	}
 

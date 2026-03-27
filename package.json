@@ -156,27 +156,27 @@
 			"chat/customizations/create": [
 				{
 					"command": "joshbot.newAgent",
-					"when": "aiCustomizationManagementSection == agents",
+					"when": "aiCustomizationManagementHarness == joshbot && aiCustomizationManagementSection == agents",
 					"group": "joshbot"
 				},
 				{
 					"command": "joshbot.newUserAgent",
-					"when": "aiCustomizationManagementSection == agents",
+					"when": "aiCustomizationManagementHarness == joshbot && aiCustomizationManagementSection == agents",
 					"group": "joshbot"
 				},
 				{
 					"command": "joshbot.newSkill",
-					"when": "aiCustomizationManagementSection == skills",
+					"when": "aiCustomizationManagementHarness == joshbot && aiCustomizationManagementSection == skills",
 					"group": "joshbot"
 				},
 				{
 					"command": "joshbot.newInstruction",
-					"when": "aiCustomizationManagementSection == instructions",
+					"when": "aiCustomizationManagementHarness == joshbot && aiCustomizationManagementSection == instructions",
 					"group": "joshbot"
 				},
 				{
 					"command": "joshbot.newPrompt",
-					"when": "aiCustomizationManagementSection == prompts",
+					"when": "aiCustomizationManagementHarness == joshbot && aiCustomizationManagementSection == prompts",
 					"group": "joshbot"
 				}
 			]

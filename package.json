@@ -1,143 +1,208 @@
 {
-  "name": "joshbot",
-  "displayName": "Josh Bot",
-  "description": "A dedicated coding assistant great at complex tasks",
-  "version": "1.3.0",
-  "publisher": "spcr-test",
-  "license": "MIT",
-  "engines": {
-    "vscode": "^1.102.0"
-  },
-  "enabledApiProposals": [
-    "chatSessionsProvider",
-    "chatParticipantAdditions",
-    "chatParticipantPrivate",
-    "remoteCodingAgents",
-    "languageModelThinkingPart"
-  ],
-  "main": "./out/extension.js",
-  "categories": [
-    "Other"
-  ],
-  "extensionKind": [
-    "ui",
-    "workspace"
-  ],
-  "activationEvents": [
-    "onChatSession:josh-bot",
-    "*"
-  ],
-  "capabilities": {
-    "virtualWorkspaces": true,
-    "untrustedWorkspaces": {
-      "supported": true
-    }
-  },
-  "contributes": {
-    "remoteCodingAgents": [
-      {
-        "id": "josh-bot",
-        "name": "Josh Bot",
-        "displayName": "Josh Bot",
-        "command": "joshbot.cloudButton",
-        "when": "config.joshbot.contributeCloudButton"
-      }
-    ],
-    "chatSessions": [
-      {
-        "type": "josh-bot",
-        "name": "joshbot",
-        "displayName": "Josh Bot",
-        "description": "A dedicated coding assistant great at complex tasks",
-        "when": "config.joshbot.contributeChatSessions",
-        "commands": [
-          {
-            "name": "secrets",
-            "description": "List stored secret keys"
-          },
-            {
-              "name": "set-secret",
-              "description": "Store a secret: /set-secret <key> <value>"
-            }
-        ],
-        "capabilities": {
-          "supportsFileAttachments": true
-        }
-      }
-    ],
-    "commands": [
-      {
-        "command": "joshbot.hello",
-        "title": "Hello",
-        "category": "JoshBot"
-      },
-      {
-        "command": "joshbot.cloudButton",
-        "title": "Cloud Button",
-        "category": "JoshBot"
-      },
-      {
-        "command": "joshbot.snake",
-        "title": "Snake!",
-        "category": "JoshBot",
-        "icon": "$(snake)"
-      },
-      {
-        "command": "joshbot.squirrel",
-        "title": "Squirrel!",
-        "category": "JoshBot",
-        "icon": "$(squirrel)"
-      }
-    ],
-    "configuration": {
-      "title": "JoshBot",
-      "properties": {
-        "joshbot.contributeChatSessions": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable to contribute chat sessions and a dynamic chat participant."
-        },
-        "joshbot.contributeCloudButton": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable to contribute a cloud button for Josh Bot."
-        }
-      }
-    },
-    "menus": {
-      "chat/multiDiff/context": [
-        {
-          "command": "joshbot.squirrel",
-          "when": "chatSessionType == josh-bot"
-        },
-        {
-          "command": "joshbot.snake",
-          "when": "chatSessionType == josh-bot"
-        }
-      ]
-    }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js",
-    "package": "vsce package",
-    "deploy": "vsce publish",
-    "postinstall": "npm run downloadapi",
-    "downloadapi": "node ./node_modules/@vscode/dts/index.js main && node ./node_modules/@vscode/dts/index.js dev"
-  },
-  "devDependencies": {
-    "@types/node": "16.x",
-    "@vscode/vsce": "^3.6.0",
-    "typescript": "^5.8.0",
-    "@vscode/dts": "^0.4.1"
-  },
-  "dependencies": {},
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/joshspicer/joshbot.git"
-  }
+	"name": "joshbot",
+	"displayName": "Josh Bot",
+	"description": "A dedicated coding assistant great at complex tasks",
+	"version": "1.3.0",
+	"publisher": "spcr-test",
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.102.0"
+	},
+	"enabledApiProposals": [
+		"chatSessionsProvider",
+		"chatSessionCustomizationProvider",
+		"chatPromptFiles",
+		"chatParticipantAdditions",
+		"chatParticipantPrivate",
+		"remoteCodingAgents",
+		"languageModelThinkingPart"
+	],
+	"main": "./out/extension.js",
+	"categories": [
+		"Other"
+	],
+	"extensionKind": [
+		"ui",
+		"workspace"
+	],
+	"activationEvents": [
+		"onChatSession:josh-bot",
+		"*"
+	],
+	"capabilities": {
+		"virtualWorkspaces": true,
+		"untrustedWorkspaces": {
+			"supported": true
+		}
+	},
+	"contributes": {
+		"remoteCodingAgents": [
+			{
+				"id": "josh-bot",
+				"name": "Josh Bot",
+				"displayName": "Josh Bot",
+				"command": "joshbot.cloudButton",
+				"when": "config.joshbot.contributeCloudButton"
+			}
+		],
+		"chatSessions": [
+			{
+				"type": "josh-bot",
+				"name": "josh-bot",
+				"displayName": "Josh Bot",
+				"description": "A dedicated coding assistant great at complex tasks",
+				"icon": "$(squirrel)",
+				"when": "config.joshbot.contributeChatSessions",
+				"commands": [
+					{
+						"name": "secrets",
+						"description": "List stored secret keys"
+					},
+					{
+						"name": "set-secret",
+						"description": "Store a secret: /set-secret <key> <value>"
+					}
+				],
+				"capabilities": {
+					"supportsFileAttachments": true
+				}
+			}
+		],
+		"commands": [
+			{
+				"command": "joshbot.hello",
+				"title": "Hello",
+				"category": "JoshBot"
+			},
+			{
+				"command": "joshbot.cloudButton",
+				"title": "Cloud Button",
+				"category": "JoshBot"
+			},
+			{
+				"command": "joshbot.snake",
+				"title": "Snake!",
+				"category": "JoshBot",
+				"icon": "$(snake)"
+			},
+			{
+				"command": "joshbot.squirrel",
+				"title": "Squirrel!",
+				"category": "JoshBot",
+				"icon": "$(squirrel)"
+			},
+			{
+				"command": "joshbot.newAgent",
+				"title": "New JoshBot Agent",
+				"category": "JoshBot"
+			},
+			{
+				"command": "joshbot.newSkill",
+				"title": "New JoshBot Skill",
+				"category": "JoshBot"
+			},
+			{
+				"command": "joshbot.newInstruction",
+				"title": "New JoshBot Instruction",
+				"category": "JoshBot"
+			},
+			{
+				"command": "joshbot.newPrompt",
+				"title": "New JoshBot Prompt",
+				"category": "JoshBot"
+			},
+			{
+				"command": "joshbot.newUserAgent",
+				"title": "New JoshBot Agent (User)",
+				"category": "JoshBot"
+			},
+			{
+				"command": "joshbot.openItem",
+				"title": "Open",
+				"category": "JoshBot"
+			},
+			{
+				"command": "joshbot.inspectItem",
+				"title": "Inspect",
+				"category": "JoshBot"
+			}
+		],
+		"configuration": {
+			"title": "JoshBot",
+			"properties": {
+				"joshbot.contributeChatSessions": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable to contribute chat sessions and a dynamic chat participant."
+				},
+				"joshbot.contributeCloudButton": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable to contribute a cloud button for Josh Bot."
+				}
+			}
+		},
+		"menus": {
+			"chat/multiDiff/context": [
+				{
+					"command": "joshbot.squirrel",
+					"when": "chatSessionType == josh-bot"
+				},
+				{
+					"command": "joshbot.snake",
+					"when": "chatSessionType == josh-bot"
+				}
+			],
+			"chat/customizations/create": [
+				{
+					"command": "joshbot.newAgent",
+					"when": "aiCustomizationManagementHarness == joshbot && aiCustomizationManagementSection == agents",
+					"group": "joshbot"
+				},
+				{
+					"command": "joshbot.newUserAgent",
+					"when": "aiCustomizationManagementHarness == joshbot && aiCustomizationManagementSection == agents",
+					"group": "joshbot"
+				},
+				{
+					"command": "joshbot.newSkill",
+					"when": "aiCustomizationManagementHarness == joshbot && aiCustomizationManagementSection == skills",
+					"group": "joshbot"
+				},
+				{
+					"command": "joshbot.newInstruction",
+					"when": "aiCustomizationManagementHarness == joshbot && aiCustomizationManagementSection == instructions",
+					"group": "joshbot"
+				},
+				{
+					"command": "joshbot.newPrompt",
+					"when": "aiCustomizationManagementHarness == joshbot && aiCustomizationManagementSection == prompts",
+					"group": "joshbot"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js",
+		"package": "vsce package",
+		"deploy": "vsce publish",
+		"postinstall": "npm run downloadapi",
+		"downloadapi": "node ./node_modules/@vscode/dts/index.js main && node ./node_modules/@vscode/dts/index.js dev"
+	},
+	"devDependencies": {
+		"@types/node": "16.x",
+		"@vscode/vsce": "^3.6.0",
+		"typescript": "^5.8.0",
+		"@vscode/dts": "^0.4.1"
+	},
+	"dependencies": {},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/joshspicer/joshbot.git"
+	}
 }

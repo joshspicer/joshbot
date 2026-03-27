@@ -153,7 +153,7 @@
 					"when": "chatSessionType == josh-bot"
 				}
 			],
-			"AICustomizationManagementCreate": [
+			"chat/customizations/create": [
 				{
 					"command": "joshbot.newAgent",
 					"when": "aiCustomizationManagementSection == agents",
